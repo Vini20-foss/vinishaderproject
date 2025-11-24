@@ -4,6 +4,70 @@ Este documento foi desenhado para você, o operador da pipeline. Ele separa o qu
 
 -----
 
+se quiser usar direto no mpv por padrão vai no mpv.conf (dentro de /.config/mpv/) e adicione esses parametros 
+
+############
+# Profiles #
+############
+
+# The options declared as part of profiles override global default settings,
+# but only take effect when the profile is active.
+
+# The following profile can be enabled on the command line with: --profile=eye-cancer
+
+#[eye-cancer]
+#sharpen=5
+
+# Ativar o perfil sempre
+profile=defaults
+
+[defaults]
+vo=gpu-next
+gpu-api=opengl
+opengl-es=yes
+hwdec=auto-copy-safe
+fbo-format=rgba32f
+vf=format=rgba
+video-output-levels=full
+force-media-title=force_full_rgb
+hdr-compute-peak=no
+target-colorspace-hint=yes
+scale=ewa_lanczos4sharpest
+cscale=sinc
+dscale=ewa_lanczos
+tscale=sphinx
+gamut-mapping-mode=linear
+target-gamut=aces-ap0
+target-trc=srgb
+target-prim=aces-ap1
+target-peak=1200
+gpu-context=auto
+gpu-shader-cache=yes
+video-sync=display-resample
+correct-downscaling=yes
+sigmoid-upscaling=yes
+linear-downscaling=yes
+deband=no
+interpolation=yes
+dither-depth=auto
+temporal-dither=yes
+cache-on-disk=no
+demuxer-max-bytes=256M
+cache=yes
+cache-secs=60
+cache-pause=yes
+cache-pause-wait=2
+demuxer-readahead-secs=60
+keep-open=yes
+slang=por,br,pt
+alang=eng,en,por,br,pt
+save-position-on-quit
+# Pipeline GRX
+glsl-shaders=~~/.config/mpv/Shaders/Analise.glsl
+glsl-shaders=~~/.config/mpv/Shaders/limpeza.glsl
+glsl-shaders=~~/.config/mpv/Shaders/restauração.glsl
+glsl-shaders=~~/.config/mpv/Shaders/upscale.glsl
+
 # 📘 Legenda de Risco
 
   * 🟢 **LIVRE:** Parâmetros de gosto pessoal. Ajuste conforme sua tela ou preferência.
