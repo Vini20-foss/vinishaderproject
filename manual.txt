@@ -4,7 +4,8 @@ Este documento foi desenhado para você, o operador da pipeline. Ele separa o qu
 
 -----
 
-se quiser usar direto no mpv por padrão vai no mpv.conf (dentro de /.config/mpv/) e adicione esses parametros 
+se quiser usar direto no mpv por padrão vai no mpv.conf (dentro de /.config/mpv/) e adicione esses parametros
+caso a pasta shaders não exista só criar o diretorio com esse nome e colocar os arquivos de shader dentro dele
 
 ############
 # Profiles #
@@ -63,10 +64,10 @@ slang=por,br,pt
 alang=eng,en,por,br,pt
 save-position-on-quit
 # Pipeline GRX
-glsl-shaders=~~/.config/mpv/Shaders/Analise.glsl
-glsl-shaders=~~/.config/mpv/Shaders/limpeza.glsl
-glsl-shaders=~~/.config/mpv/Shaders/restauração.glsl
-glsl-shaders=~~/.config/mpv/Shaders/upscale.glsl
+glsl-shaders=~~/.config/mpv/shaders/Analise.glsl
+glsl-shaders=~~/.config/mpv/shaders/limpeza.glsl
+glsl-shaders=~~/.config/mpv/shaders/restauração.glsl
+glsl-shaders=~~/.config/mpv/shaders/upscale.glsl
 
 # 📘 Legenda de Risco
 
