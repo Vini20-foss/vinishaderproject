@@ -88,6 +88,7 @@ A ordem importa: S1 -> S2 (+S2 hooks) -> S3 (+S3 hooks) -> S4. Romper ordem queb
 
 
 Sumário dos arquivos e categorias de parâmetros
+
 analise.glsl (S1) — parâmetros de análise e segurança, thresholds de detecção e sensibilidade
 
 limpeza.glsl (S2) — parâmetros de limpeza/denoise, modos (anime), proteções estruturais
