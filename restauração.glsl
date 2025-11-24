@@ -1,53 +1,60 @@
 // ===================================================================================
-// S2_cleaning_reconstruction.glsl — Firewall Estrutural com Inteligência Contextual (v3.1 "Architect+")
+// S3_enhancement.glsl — Módulo de Restauração de Integridade para Conteúdo Destruido
 // ===================================================================================
 // Licença: MIT / GPLv3 — Código aberto, auditável, modular
-// Autor: Pipeline GRX - Estágio 2 (O Cirurgião de Fluxo)
+// Autor: Pipeline GRX - Estágio 3 com Restauração de Integridade (Nova Abordagem)
 // ===================================================================================
-// FILOSOFIA REVISADA:
-// 1. Limpeza Inteligente: Remove APENAS o que o S1 identificou como "ruído feio"
-// 2. Preservação do Esqueleto: Mantém a estrutura para o S3/S4 reinjetarem detalhe "bonito"
-// 3. Adaptação Emocional: Trata sombras, midtones e highlights como ecossistemas distintos
-// 4. Integração Total com o Alarme: Desliga em cascata quando o caos ataca
+// OBJETIVO: Restaurar a integridade do sinal para entregar ao mpv um conteúdo limpo
+// SAÍDA: STAGE3_ENHANCED (RGBA): .rgb=imagem restaurada em sRGB, .a=restoration_confidence
 // ===================================================================================
-
+// PRINCÍPIO FUNDAMENTAL:
+// ✅ NÃO COMPETIR com o mpv (--target-trc=srgb)
+// ✅ ENTREGAR um sinal limpo com micro-contraste restaurado, gama corrigida e cores naturais
+// ✅ DEIXAR o mpv fazer seu trabalho final de mapeamento de tom e HDR
+// ===================================================================================
+// REGRAS DE OURO IMPLEMENTADAS:
+// ✅ Remoção completa do HDR simulado (conflita com o mpv)
+// ✅ Restauração de micro-contraste com LCE (Local Contrast Enhancement)
+// ✅ Normalização adaptativa de gama para mid-tones esmagados
+// ✅ Sistema de vibrance inteligente (não saturação global)
+// ✅ Correção avançada de subamostragem YUV 4:2:0
+// ✅ Proteção robusta de tons de pele
+// ✅ Anti-aliasing direcional com preservação de detalhes
+// ✅ Sistema de ruído estético para mascaramento natural
+// ✅ Integração completa com mapas do S1/S2 para decisões inteligentes
+// ===================================================================================
 // -------------------------
-// 2.1 🔧 CONFIGURAÇÕES PRINCIPAIS (AJUSTADAS PARA A INTELIGÊNCIA CONTEXTUAL)
+// 3.1 🔧 CONFIGURAÇÕES PRINCIPAIS - CONTROLES DO USUÁRIO
 // -------------------------
-#define ENABLE_ADAPTIVE_DENOISE       1
-#define ENABLE_DIRECTIONAL_DEBLOCK    1 // Mantido, mas com controle do S1
-#define ENABLE_GRADIENT_DEBAND        1 // Mantido, mas com máscara emocional
-#define ENABLE_CNN_LIGHT_RECON        1
-#define ENABLE_DETAIL_RECONSTRUCTION  1
-#define ENABLE_MULTI_VECTOR_POLISH    1
-#define ENABLE_SAFETY_CHECKS          1
-#define ENABLE_BRIGHT_AREA_PROTECTION 1
-#define ENABLE_ANIME_CHAOS_SOLVER     1 // 1=Auto (Ativa "IA" de traços se detectar Anime), 0=Off
-
-// Intensidades Base (Agora adaptativas ao contexto emocional)
-#define DENOISE_STRENGTH              0.85 // Reduzido para preservar textura artística
-#define DEBLOCK_STRENGTH              0.90 // Reduzido para não lavar detalhes reais
-#define DEBAND_STRENGTH               0.65 // Equilíbrio entre limpeza e naturalidade
-#define RECONSTRUCTION_STRENGTH       0.70
-#define DETAIL_STRENGTH               0.35
-
-// Parâmetros Nucleares (Agora com controle emocional)
-#define SHADOW_NUKE_LEVEL             0.12 // Limiar ajustado para não matar grão de filme
-#define CHROMA_NUKE_STRENGTH          0.85 // Reduzido para preservar tons de pele no escuro
-#define FLAT_AREA_DEBAND_THRESHOLD    0.03 // Limiar para detecção de banding
-#define STRUCTURAL_PROTECTION_FACTOR  0.75 // Fator de proteção de estruturas reais
-
+// PARÂMETROS PRINCIPAIS CONTROLADOS PELO USUÁRIO (0.0-1.0)
+#define MICRO_CONTRAST_STRENGTH  0.75  // Força da restauração de micro-contraste (0.0=desligado, 1.0=máximo)
+#define GAMMA_NORMALIZATION      0.80  // Força da normalização de gama (0.0=desligado, 1.0=completa)
+#define VIBRANCE_ENHANCEMENT     0.75  // Força do vibrance inteligente (0.0=natural, 1.0=vibrante)
+#define SKIN_TONE_PROTECTION     0.95  // Proteção de tons de pele (0.0=desligado, 1.0=máximo)
+#define YUV420_CORRECTION        1.0   // 0.0=desligado, 1.0=correção completa
+#define MOTION_ADAPTIVE_STRENGTH 0.70  // Adaptação a movimento (0.0=conservador, 1.0=agressivo)
+#define EDGE_PROTECTION_STRENGTH 0.90  // Proteção contra perda de detalhes em bordas
+// PARÂMETROS INTERNOS (não ajuste a menos que saiba o que está fazendo)
+#define LCE_RADIUS               2.0   // Raio do LCE (Local Contrast Enhancement)
+#define LCE_CURVE_STEEPNESS      1.2   // Inclinação da curva S para mid-tones
+#define VIBRANCE_BASE_BOOST      1.15  // Boost base para cores desbotadas
+#define VIBRANCE_PROTECTION      0.30  // Proteção para cores já saturadas
+#define GAMMA_BASE_ADJUST        1.10  // Fator de ajuste de gama base
+#define GAMMA_ADAPTIVE_FACTOR    0.25  // Fator de adaptação para áreas problemáticas
+#define SKIN_TONE_RANGE_MIN      0.15  // Limite mínimo de luminância para tons de pele
+#define SKIN_TONE_RANGE_MAX      0.85  // Limite máximo de luminância para tons de pele
+#define MAX_GAMMA_EXPANSION      1.4   // Limite máximo de expansão de gama
+#define QUALITY_CLAMP_THRESHOLD  0.35  // Limite para detecção de artefatos
 // ===================================================================================
-// 🎯 CONSTANTES ÁUREAS FIXAS (MANTIDAS)
+// 🎯 CONSTANTES ÁUREAS FIXAS
 // ===================================================================================
-#define GOLDEN_RATIO          1.618033988749895
-#define GOLDEN_CONJUGATE      0.618033988749895
-#define GOLDEN_ANGLE          2.399963229728653
-#define GOLDEN_SEQUENCE       2.618033988749895
-#define GOLDEN_SQRT           1.272019649514069
-
+#define GOLDEN_RATIO             1.618033988749895
+#define GOLDEN_ANGLE             2.399963229728653
+#define GOLDEN_CONJUGATE         0.618033988749895
+#define GOLDEN_SEQUENCE          2.618033988749895
+#define GOLDEN_SQRT              1.272019649514069
 // ===================================================================================
-// 2.2 🔧 FUNÇÕES UTILITÁRIAS UNIFICADAS (PADRÃO S2 BLINDADO)
+// 🔧 FUNÇÕES UTILITÁRIAS UNIFICADAS
 // ===================================================================================
 #ifndef GRX_UTILS_DEFINED
 #define GRX_UTILS_DEFINED
@@ -62,7 +69,7 @@ float saturation(vec3 c) {
     float minc = min(min(c.r, c.g), c.b);
     return (maxc - minc) / max(maxc, 1e-6);
 }
-// ✅ FUNÇÃO ÚNICA: Ruído Azul
+// ✅ FUNÇÃO ÚNICA: Ruído Azul (Blue Noise)
 float blueNoise(vec2 uv) {
     uv = fract(uv * vec2(0.5, 0.75));
     vec2 p = floor(uv);
@@ -70,11 +77,12 @@ float blueNoise(vec2 uv) {
     float t = dot(uv.xy, uv.yx + vec2(33.3, 77.7));
     return fract(sin(t) * 1e5 + p.x * 1e3 + p.y * 1e2);
 }
-// ✅ FUNÇÃO ÚNICA: ELU Shaper
-float elu_shaper(float x, float a) {
-    return x > 0.0 ? x : a * (exp(x) - 1.0);
+// ✅ FUNÇÃO ÚNICA: Conversão HSV para RGB
+vec3 hsv2rgb(vec3 hsv) {
+    vec3 rgb = clamp(abs(mod(hsv.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+    return ((rgb - 1.0) * hsv.y + 1.0) * hsv.z;
 }
-// ✅ FUNÇÃO ÚNICA: Conversão HSV
+// ✅ FUNÇÃO ÚNICA: Conversão RGB para HSV
 vec3 rgb2hsv(vec3 rgb) {
     vec3 hsv = vec3(0.0);
     float cmax = max(rgb.r, max(rgb.g, rgb.b));
@@ -90,609 +98,376 @@ vec3 rgb2hsv(vec3 rgb) {
     }
     return hsv;
 }
-vec3 hsv2rgb(vec3 hsv) {
-    vec3 rgb = clamp(abs(mod(hsv.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
-    return ((rgb - 1.0) * hsv.y + 1.0) * hsv.z;
-}
 #endif
-
 // ===================================================================================
-// 2.3 🛡️ SISTEMA DE SEGURANÇA E VALIDAÇÃO (ALFÂNDEGA S1)
+// 🛡️ SISTEMA DE SEGURANÇA PADRÃO
 // ===================================================================================
 #ifndef GRX_SAFETY_SYSTEM_DEFINED
 #define GRX_SAFETY_SYSTEM_DEFINED
-
-// 1. Validação de Textura (Anti-NaN/Inf)
+// ✅ FUNÇÃO ÚNICA: Validação de Textura
 bool is_texture_valid(sampler2D tex, vec2 uv) {
     #if ENABLE_SAFETY_CHECKS
-    if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return false;
     vec4 sample = texture(tex, uv);
-    // Verifica validade numérica estrita
-    return !any(isnan(sample)) && !any(isinf(sample));
+    return all(greaterThanEqual(sample.rgb, vec3(0.0))) &&
+    all(lessThanEqual(sample.rgb, vec3(1.0))) &&
+    (length(sample.rgb) > 1e-6) &&
+    !isnan(sample.r) && !isnan(sample.g) && !isnan(sample.b);
     #else
     return true;
     #endif
 }
-
-// 2. Sanitizador de Dados do S1 (NOVO)
-// Garante que o S2 nunca receba instruções de "Edge" ou "Variance" corrompidas.
-vec4 validate_s1_data(vec4 map_data) {
-    if (any(isnan(map_data)) || any(isinf(map_data))) {
-        // Fallback seguro: Edge=0, Variance=0, Exposure=0.5, Confidence=0
-        return vec4(0.0, 0.0, 0.5, 0.0);
-    }
-    return clamp(map_data, 0.0, 1.0);
-}
-
-// 3. Gradiente Seguro (Proteção contra leitura fora de borda)
-vec3 get_gradient_safe(sampler2D tex, vec2 uv, vec2 p, vec2 dir, float edge_strength) {
-    vec2 uv_fwd = clamp(uv + dir * p, 0.0, 1.0);
-    vec2 uv_bwd = clamp(uv - dir * p, 0.0, 1.0);
-
-    vec3 forward = texture(tex, uv_fwd).rgb;
-    vec3 backward = texture(tex, uv_bwd).rgb;
-
-    // Trava de segurança para NaNs
-    if (any(isnan(forward))) forward = vec3(0.0);
-    if (any(isnan(backward))) backward = vec3(0.0);
-
-    // Se é borda forte, reduzimos o gradiente para não amplificar artefatos
-    float edge_dampener = 1.0 - edge_strength * 0.8;
-    return (forward - backward) * edge_dampener;
-}
-
-// 4. Detecção de Artefatos (CORRIGIDO)
-// Agora sabe diferenciar "Limpeza" de "Destruição".
-bool detect_processing_artifacts(vec3 original, vec3 processed, vec4 maps, vec4 golden, float base_threshold) {
+// ✅ FUNÇÃO ÚNICA: Detecção de Artefatos
+bool detect_processing_artifacts(vec3 original, vec3 processed, float threshold) {
     #if ENABLE_SAFETY_CHECKS
-
-    // 1. LEITURA DO CONTEXTO (S1)
-    float variance = maps.g;       // O quanto a área original era caótica?
-    float aesthetic = golden.a;    // O quanto a área original era importante?
-    float edge = maps.r;           // É uma borda?
-
-    // 2. CÁLCULO DA MUDANÇA REAL
     float diff = length(original - processed);
-
-    // Se a mudança for imperceptível, aprova logo.
-    if (diff < 0.02) return false;
-
-    // 3. TOLERÂNCIA DINÂMICA (A Mágica)
-    // Começamos com o limite base (ex: 0.1)
-    float dynamic_threshold = base_threshold;
-
-    // PERMISSÃO PARA LIMPAR:
-    // Se a variância é alta (ruído), PERMITIMOS que a imagem mude drasticamente.
-    // Queremos que o ruído suma, então a diferença TEM que ser grande.
-    // Se variance for 1.0 (chuvisco), a tolerância sobe muito.
-    dynamic_threshold += variance * 2.0;
-
-    // PROTEÇÃO DE ESTRUTURA:
-    // Se for uma área estética (rosto) ou borda forte, apertamos a segurança.
-    // Não queremos borrar rostos nem destruir bordas.
-    float protection_factor = max(aesthetic, edge);
-    dynamic_threshold *= (1.0 - protection_factor * 0.5);
-
-    // 4. VERIFICAÇÃO DE ALTA FREQUÊNCIA (Ringing)
-    // Artefatos digitais (erros de shader) costumam criar oscilações rápidas (pixels xadrez).
-    // Limpeza de ruído costuma criar suavidade.
-    // Vamos checar se criamos "lixo" de alta frequência.
-    // (Simplificado para performance: checa se a diferença é errática)
-
-    // Se a diferença é maior que a tolerância calculada -> ARTEFATO DETECTADO
-    // Mas, se for apenas "limpeza" (diff alta mas variance alta), o dynamic_threshold absorve.
-    bool is_failure = (diff > dynamic_threshold);
-
-    // Salva-vidas final: Se o S1 disse que era CAOS TOTAL (Confidence < 0.1),
-    // qualquer tentativa de "processar" pode ser perigosa.
-    if (maps.a < 0.1 && diff > 0.1) is_failure = true;
-
-    return is_failure;
-
+    float high_freq = 0.0;
+    vec2 p = HOOKED_pt;
+    for (int i = 0; i < 4; i++) {
+        vec2 offset = vec2(0.0);
+        if (i == 0) offset = vec2( p.x, 0.0);
+        else if (i == 1) offset = vec2(-p.x, 0.0);
+        else if (i == 2) offset = vec2(0.0,  p.y);
+        else offset = vec2(0.0, -p.y);
+        vec2 sample_uv = clamp(HOOKED_pos + offset, vec2(0.0), vec2(1.0));
+        high_freq += length(processed - sRGB_to_linear(texture(OUTPUT, sample_uv).rgb));
+    }
+    return (diff > threshold) || (high_freq > threshold * 2.0);
     #else
     return false;
     #endif
 }
 #endif
-
 // ===================================================================================
-// 🎨 GESTÃO DE CORES (MANTIDA)
+// 🎨 GESTÃO DE CORES CONSISTENTE
 // ===================================================================================
 #ifndef GRX_COLOR_MANAGEMENT_DEFINED
 #define GRX_COLOR_MANAGEMENT_DEFINED
+// ✅ FUNÇÃO ÚNICA: sRGB para Linear
 vec3 sRGB_to_linear(vec3 srgb) {
     bvec3 cutoff = lessThan(srgb, vec3(0.04045));
     vec3 higher = pow((srgb + 0.055) / 1.055, vec3(2.4));
     vec3 lower = srgb / 12.92;
     return mix(higher, lower, cutoff);
 }
+// ✅ FUNÇÃO ÚNICA: Linear para sRGB
 vec3 linear_to_sRGB(vec3 linear) {
     bvec3 cutoff = lessThan(linear, vec3(0.0031308));
     vec3 higher = 1.055 * pow(linear, vec3(1.0/2.4)) - 0.055;
     vec3 lower = linear * 12.92;
     return mix(higher, lower, cutoff);
 }
+// ✅ FUNÇÃO ÚNICA: Correção de Subamostragem YUV 4:2:0
+vec3 correct_yuv420_subsampled(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps) {
+    #if YUV420_CORRECTION > 0.0
+    float edge = maps.r;
+    float variance = maps.g;
+    // Detecta áreas com alta chance de artefatos de subamostragem
+    if (edge > 0.3 && variance < 0.15) {
+        // Amostragem de vizinhos para correção de croma
+        vec3 neighbors[4];
+        neighbors[0] = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv + vec2( p.x, 0.0), vec2(0.0), vec2(1.0))).rgb);
+        neighbors[1] = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv - vec2( p.x, 0.0), vec2(0.0), vec2(1.0))).rgb);
+        neighbors[2] = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv + vec2(0.0,  p.y), vec2(0.0), vec2(1.0))).rgb);
+        neighbors[3] = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv - vec2(0.0,  p.y), vec2(0.0), vec2(1.0))).rgb);
+        // Calcula luminância e croma local
+        float center_luma = safe_luma(linear_rgb);
+        vec3 chroma_center = linear_rgb - vec3(center_luma);
+        // Correção adaptativa baseada na consistência local
+        vec3 avg_chroma = vec3(0.0);
+        float chroma_weight = 0.0;
+        for (int i = 0; i < 4; i++) {
+            float neighbor_luma = safe_luma(neighbors[i]);
+            vec3 neighbor_chroma = neighbors[i] - vec3(neighbor_luma);
+            float luma_similarity = 1.0 - abs(center_luma - neighbor_luma) * 8.0;
+            luma_similarity = clamp(luma_similarity, 0.0, 1.0);
+            avg_chroma += neighbor_chroma * luma_similarity;
+            chroma_weight += luma_similarity;
+        }
+        if (chroma_weight > 1e-6) {
+            avg_chroma /= chroma_weight;
+            // Mistura adaptativa
+            float correction_strength = YUV420_CORRECTION * (1.0 - edge) * (1.0 - variance);
+            vec3 corrected = vec3(center_luma) + mix(chroma_center, avg_chroma, correction_strength);
+            return corrected;
+        }
+    }
+    #endif
+    return linear_rgb;
+}
 #endif
 
 // ===================================================================================
-// 2.3 🧼 SISTEMA DE LIMPEZA INTELIGENTE (O CORAÇÃO DA INOVAÇÃO)
+// 3.3 🧠 RESTAURAÇÃO DE SALIÊNCIA (O ILUSIONISTA DE CONTRASTE)
 // ===================================================================================
-
-// 1. Denoising Estrutural com Consciência Emocional (NL-Means Adaptativo)
-vec3 emotional_structural_denoise(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
+// Esta é a primeira parte do "joguinho".
+// Usamos a Bússola Áurea (S1) para aplicar micro-contraste (LCE)
+// APENAS em áreas que são "boas" (alta estética, baixa entropia/ruído).
+// Isso "puxa" o olho para os detalhes que importam.
+// ===================================================================================
+vec3 restore_local_contrast(vec3 linear_rgb, vec4 maps, vec4 golden) {
     vec3 result = linear_rgb;
-    #if ENABLE_ADAPTIVE_DENOISE
-    float edge_strength = maps.r;       // Borda do S1 (0.0=liso, 1.0=borda forte)
-    float pattern_entropy = golden.g;  // Entropia do S1 (0.0=organizado, 1.0=caos)
-    float aesthetic_score = golden.a;  // Beleza do S1 (0.0=feio, 1.0=lindo)
-    float brightness = luma.r;         // Brilho
+    #if MICRO_CONTRAST_STRENGTH > 0.01
 
-    // 🎭 A INTELIGÊNCIA EMOCIONAL:
-    // Se é "bonito" (aesthetic_score alto), reduzimos a limpeza para preservar a textura artística
-    // Se é "caos" (pattern_entropy alto) e "feio", aumentamos a limpeza
-    float emotional_factor = 1.0 - (aesthetic_score * 0.6) + (pattern_entropy * 0.4);
-    emotional_factor = clamp(emotional_factor, 0.3, 1.2);
+    // INTELIGÊNCIA S1: Usa dados já calculados pelo Juiz
+    float aesthetic_score = golden.a; // Saliência (Beleza)
+    float edge_strength = maps.r;     // Bordas (Risco de Halo)
+    float noise_entropy = golden.g;   // Caos (Ruído)
 
-    // Força adaptativa com múltiplas proteções
-    float strength = DENOISE_STRENGTH * emotional_factor;
-    strength *= (1.0 - edge_strength * 0.85);       // Protege bordas fortes
-    strength *= (1.0 - aesthetic_score * 0.3);     // Protege áreas bonitas
-    strength *= (1.0 + (1.0 - brightness) * 0.4);  // Mais forte nas sombras
+    // A "Certeza Estética": Só realça o que é bonito e não é ruído puro
+    float saliency_score = aesthetic_score * (1.0 - noise_entropy * 0.75);
 
-    if (strength < 0.03) return result;
+    // Força guiada pela saliência
+    float lce_strength = MICRO_CONTRAST_STRENGTH * clamp(saliency_score, 0.0, 1.0);
+    lce_strength *= (1.0 - edge_strength * 0.5); // Protege halos em bordas fortes
 
-    // 📐 ANÁLISE DE ESTRUTURA LOCAL (NL-Means Inteligente)
-    vec3 accum = vec3(0.0);
-    float total_weight = 0.0;
+    if (lce_strength > 0.01) {
+        float Y = safe_luma(linear_rgb);
+        // Máscara de Mid-tone (Onde o contraste importa)
+        float mid_tone_mask = 1.0 - pow(abs(Y - 0.5) * 2.0, 2.0);
 
-    // Raio adaptativo baseado na complexidade
-    float base_radius = 1.5;
-    float complexity_radius = pattern_entropy * 1.0; // Áreas caóticas precisam de busca maior
-    float radius = base_radius + complexity_radius;
-
-    // Amostragem em espiral áurea para eficiência e cobertura
-    int samples = int(8.0 * (1.0 + pattern_entropy));
-    for (int i = 0; i < samples; i++) {
-        float ratio = float(i) / float(samples);
-        float angle = float(i) * GOLDEN_ANGLE;
-        float dist = ratio * radius;
-        vec2 offset = vec2(cos(angle), sin(angle)) * dist * p;
-
-        vec2 sample_uv = clamp(uv + offset, vec2(0.0), vec2(1.0));
-        vec3 sample_color = texture(GRX_COLOR_LINEAR, sample_uv).rgb;
-
-        // 🎚️ PESOS ESTRATÉGICOS:
-        // 1. Peso espacial (gaussiano)
-        float spatial_dist = length(offset);
-        float spatial_weight = exp(-spatial_dist * spatial_dist * 0.6);
-
-        // 2. Peso de cor (adaptativo à borda)
-        float color_diff = length(sample_color - linear_rgb);
-        float color_sensitivity = 8.0 + edge_strength * 12.0; // Em bordas, mais sensível a diferenças
-        float color_weight = exp(-color_diff * color_diff * color_sensitivity);
-
-        // 3. Peso estrutural (coerência de padrão)
-        float structural_weight = 1.0 + (1.0 - pattern_entropy) * 0.5;
-
-        // Peso final combinado
-        float weight = spatial_weight * color_weight * structural_weight;
-
-        accum += sample_color * weight;
-        total_weight += weight;
-    }
-
-    if (total_weight > 1e-6) {
-        vec3 denoised = accum / total_weight;
-        result = mix(linear_rgb, denoised, strength);
-    }
-    #endif
-    return clamp(result, 0.0, 1.0);
-}
-
-// 2. Deblocking Direcional com Proteção Estrutural (Wavelet Emocional)
-vec3 emotional_directional_deblock(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
-    vec3 result = linear_rgb;
-    #if ENABLE_DIRECTIONAL_DEBLOCK
-    float grid_density = golden.r;      // Densidade de grade do S1
-    float edge_strength = maps.r;       // Força de borda do S1
-    float aesthetic_score = golden.a;  // Beleza do S1
-    float pattern_entropy = golden.g;  // Entropia do S1
-
-    // 🎭 A INTELIGÊNCIA EMOCIONAL:
-    // Se é "bonito" e tem textura complexa, reduzimos o deblocking
-    // Se é grade óbvia e "feio", aplicamos força total
-    float emotional_factor = 1.0 + (grid_density * 0.8) - (aesthetic_score * 0.5) - (pattern_entropy * 0.3);
-    emotional_factor = clamp(emotional_factor, 0.2, 1.0);
-
-    if (grid_density > 0.15 && emotional_factor > 0.3) {
-        // 🔍 ANÁLISE DIRECIONAL AVANÇADA (Wavelet-like)
-        vec3 h_grad = get_gradient_safe(GRX_COLOR_LINEAR, uv, p, vec2(1.0, 0.0), edge_strength);
-        vec3 v_grad = get_gradient_safe(GRX_COLOR_LINEAR, uv, p, vec2(0.0, 1.0), edge_strength);
-
-        float h_magnitude = length(h_grad);
-        float v_magnitude = length(v_grad);
-
-        // 🧭 DETECÇÃO DE DIREÇÃO DOMINANTE:
-        vec3 smoothed = linear_rgb;
-        float dir_strength = DEBLOCK_STRENGTH * grid_density * emotional_factor;
-
-        if (h_magnitude > v_magnitude * 1.8) {
-            // 📏 Linhas verticais predominantes (blocos horizontais) - suaviza horizontalmente
-            smoothed = (
-                texture(GRX_COLOR_LINEAR, uv + vec2( p.x, 0.0)).rgb * 0.25 +
-                texture(GRX_COLOR_LINEAR, uv - vec2( p.x, 0.0)).rgb * 0.25 +
-                texture(GRX_COLOR_LINEAR, uv + vec2(2.0*p.x, 0.0)).rgb * 0.15 +
-                texture(GRX_COLOR_LINEAR, uv - vec2(2.0*p.x, 0.0)).rgb * 0.15 +
-                linear_rgb * 0.20
-            );
-            dir_strength *= 1.0;
-        }
-        else if (v_magnitude > h_magnitude * 1.8) {
-            // 📏 Linhas horizontais predominantes (blocos verticais) - suaviza verticalmente
-            smoothed = (
-                texture(GRX_COLOR_LINEAR, uv + vec2(0.0,  p.y)).rgb * 0.25 +
-                texture(GRX_COLOR_LINEAR, uv - vec2(0.0,  p.y)).rgb * 0.25 +
-                texture(GRX_COLOR_LINEAR, uv + vec2(0.0, 2.0*p.y)).rgb * 0.15 +
-                texture(GRX_COLOR_LINEAR, uv - vec2(0.0, 2.0*p.y)).rgb * 0.15 +
-                linear_rgb * 0.20
-            );
-            dir_strength *= 1.0;
-        }
-        else {
-            // 🔲 Grade isotrópica ou incerta - suavização controlada
-            smoothed = (
-                texture(GRX_COLOR_LINEAR, uv + vec2( p.x, 0.0)).rgb +
-                texture(GRX_COLOR_LINEAR, uv - vec2( p.x, 0.0)).rgb +
-                texture(GRX_COLOR_LINEAR, uv + vec2(0.0,  p.y)).rgb +
-                texture(GRX_COLOR_LINEAR, uv - vec2(0.0,  p.y)).rgb
-            ) * 0.25;
-            dir_strength *= 0.7; // Menos força por incerteza
-        }
-
-        // 🛡️ PROTEÇÃO ESTRUTURAL:
-        // Se há bordas fortes ou textura complexa, reduzimos a força
-        float structure_protection = STRUCTURAL_PROTECTION_FACTOR + (edge_strength * 0.3) + (pattern_entropy * 0.2);
-        dir_strength *= clamp(2.0 - structure_protection, 0.3, 1.0);
-
-        // 🎨 PROTEÇÃO DE CORES:
-        // Em áreas coloridas e bonitas, reduzimos para não lavar detalhes cromáticos
-        float color_protection = saturation(linear_rgb) * aesthetic_score;
-        dir_strength *= (1.0 - color_protection * 0.4);
-
-        result = mix(linear_rgb, smoothed, dir_strength);
-    }
-    #endif
-    return clamp(result, 0.0, 1.0);
-}
-
-// 3. Debanding com Consciência de Gradiente e Emoção
-vec3 emotional_gradient_deband(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
-    vec3 result = linear_rgb;
-    #if ENABLE_GRADIENT_DEBAND
-    float variance = maps.g;           // Variância do S1
-    float flatness = luma.g;           // Lisura do S1 (do GRX_LUMA)
-    float aesthetic_score = golden.a;  // Beleza do S1
-    float brightness = luma.r;         // Brilho
-
-    // 🎭 DETECÇÃO INTELIGENTE DE BANDING:
-    // Banding geralmente ocorre em: áreas lisas + baixa variância + não é "bonito"
-    bool is_banding_risk = (variance < FLAT_AREA_DEBAND_THRESHOLD) &&
-    (flatness > 0.5) &&
-    (aesthetic_score < 0.7);
-
-    if (is_banding_risk) {
-        // 📐 ANÁLISE DE GRADIENTE COM PROTEÇÃO DE BORDAS:
-        vec3 grad_x = get_gradient_safe(GRX_COLOR_LINEAR, uv, p, vec2(2.0, 0.0), maps.r);
-        vec3 grad_y = get_gradient_safe(GRX_COLOR_LINEAR, uv, p, vec2(0.0, 2.0), maps.r);
-
-        float gx = dot(grad_x, vec3(0.333));
-        float gy = dot(grad_y, vec3(0.333));
-        float grad_magnitude = sqrt(gx*gx + gy*gy);
-
-        // 🚫 PROTEÇÃO: Se o gradiente é muito forte, é borda real, não banding
-        if (grad_magnitude < 0.12 && grad_magnitude > 0.005) {
-            // 🧭 DIREÇÃO DO GRADIENTE (para dithering direcional):
-            vec2 grad_direction = normalize(vec2(gx, gy));
-
-            // 🌊 GERAÇÃO DE RUÍDO DIRECIONAL:
-            // Usamos a direção do gradiente para aplicar dithering na direção da luz
-            float noise = blueNoise(uv * HOOKED_size * GOLDEN_RATIO) - 0.5;
-
-            // 🎚️ AMPLITUDE ADAPTATIVA:
-            float base_amp = DEBAND_STRENGTH * 0.018;
-            // Mais forte em áreas lisas e claras (céus)
-            float amp = base_amp * (1.0 + flatness * 1.5) * (1.0 + brightness * 0.8);
-            // Menos força em áreas com alguma textura
-            amp *= (1.0 - variance * 30.0);
-            // Proteção emocional - menos força em áreas bonitas
-            amp *= (1.0 - aesthetic_score * 0.5);
-
-            // 📐 APLICAÇÃO DIRECIONAL:
-            // O ruído é aplicado principalmente na direção perpendicular ao banding
-            vec2 noise_direction = vec2(-grad_direction.y, grad_direction.x); // Perpendicular
-            float directional_factor = dot(noise_direction, vec2(noise));
-
-            // Aplica o dithering
-            result += vec3(directional_factor * amp);
-
-            // ✨ ADIÇÃO DE MICRO-TEXTURA PARA EVITAR "PLASTICIDADE":
-            // Mesmo após remover banding, adicionamos um pouco de textura orgânica
-            if (flatness > 0.7 && variance < 0.01) {
-                float micro_texture = blueNoise(uv * HOOKED_size * GOLDEN_SEQUENCE * 0.5) * 0.003;
-                result += vec3(micro_texture) * (1.0 - aesthetic_score * 0.3);
-            }
-        }
+        // Aplica curva S suave (LCE Otimizado)
+        // Fórmula rápida de curva S sem texture lookups pesados
+        vec3 curved = linear_rgb * (linear_rgb * (1.618 * linear_rgb - 0.618) + 1.0);
+        result = mix(linear_rgb, curved, lce_strength * mid_tone_mask);
     }
     #endif
     return clamp(result, 0.0, 1.0);
 }
 
 // ===================================================================================
-// 2.3.1 🌪️ LIMPEZA CINÉTICA (A ILUSÃO DE MOVIMENTO)
+// 3.4 🎨 NORMALIZAÇÃO ADAPTATIVA DE GAMA (NOVO)
 // ===================================================================================
-// Transforma ruído caótico em "velocidade" alinhada, enganando o olho humano.
-vec3 kinetic_flow_cleaning(vec2 uv, vec2 p, vec3 current_rgb, vec4 maps, vec4 temporal) {
-
-    // 1. DADOS DE FLUXO E CAOS
-    vec2 flow = GRX_TEMPORAL_tex(uv).rg; // Vetor de movimento
-    float motion_speed = length(flow);
-    float chaos = 1.0 - maps.a;          // Confiança baixa = Caos
-
-    // Só ativamos se houver movimento significativo E algum caos (ruído)
-    // Se a imagem estiver parada, não tocamos.
-    if (motion_speed < 0.002 || chaos < 0.1) return current_rgb;
-
-    // 2. A "INTUIÇÃO" DA ANIMAÇÃO
-    // Quanto mais rápido o movimento, mais podemos "esticar" a limpeza.
-    float stretch_factor = clamp(motion_speed * 100.0, 1.0, 4.0);
-
-    // 3. AMOSTRAGEM DIRECIONAL (Não circular!)
-    // Amostramos pixels APENAS na linha do movimento (passado e futuro)
-    vec3 accum = current_rgb;
-    float total_weight = 1.0;
-
-    // Amostra 2 passos para trás (rastro) e 1 para frente (previsão)
-    for (float i = 1.0; i <= 2.0; i+=1.0) {
-        // Direção do fluxo (Passado)
-        vec2 offset_back = -flow * i * 0.5;
-        vec3 sample_back = texture(GRX_COLOR_LINEAR, clamp(uv + offset_back, 0.0, 1.0)).rgb;
-
-        // Direção do fluxo (Futuro)
-        vec2 offset_fwd = flow * i * 0.5;
-        vec3 sample_fwd = texture(GRX_COLOR_LINEAR, clamp(uv + offset_fwd, 0.0, 1.0)).rgb;
-
-        // Peso decrescente (mais longe = menos influência)
-        float weight = 1.0 / (1.0 + i);
-
-        // PROTEÇÃO DE BORDA (Edge Guard)
-        // Se encontrarmos uma borda forte no caminho, paramos de borrar para não criar "fantasmas"
-        float edge_sample = texture(GRX_MAPS, clamp(uv + offset_back, 0.0, 1.0)).r;
-        weight *= (1.0 - edge_sample);
-
-        accum += (sample_back + sample_fwd) * weight;
-        total_weight += weight * 2.0;
-    }
-
-    vec3 kinetic_clean = accum / total_weight;
-
-    // 4. MISTURA ESTRATÉGICA
-    // Se for caos total (Dragon Ball luta rápida), usamos mais o Kinetic Clean.
-    // Se for movimento limpo, usamos menos.
-    float mix_strength = smoothstep(0.0, 0.5, chaos) * smoothstep(0.002, 0.02, motion_speed);
-
-    return mix(current_rgb, kinetic_clean, mix_strength);
-}
-
-// ===================================================================================
-// 2.3.2 🧠 FIREWALL ESPACIAL MESTRE COM CONSCIÊNCIA EMOCIONAL
-// ===================================================================================
-vec3 master_spatial_firewall_emotional(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
-    vec3 processed = linear_rgb;
-
-    // 🔄 ORDEM LÓGICA REFINADA:
-    // 1. Deblocking primeiro (remove estruturas artificiais grandes)
-    // 2. Denoising depois (limpa o ruído remanescente)
-    // 3. Debanding por último (trata problemas finos em áreas lisas)
-
-    processed = emotional_directional_deblock(uv, p, processed, maps, golden, luma);
-    processed = emotional_structural_denoise(uv, p, processed, maps, golden, luma);
-    processed = emotional_gradient_deband(uv, p, processed, maps, golden, luma);
-
-    return processed;
-}
-
-// ===================================================================================
-// 2.3.3 🚑 MÓDULO LÁZARO APRIMORADO (COM INTELIGÊNCIA EMOCIONAL)
-// ===================================================================================
-vec3 emotional_emergency_sanitizer(sampler2D prev_tex, vec2 uv, vec2 p, vec4 golden, vec4 luma) {
-    vec3 accum = vec3(0.0);
-    float total_weight = 0.0;
-
-    // 🎭 ANÁLISE EMOCIONAL PARA DECIDIR O NÍVEL DE SANITIZAÇÃO:
-    float aesthetic_score = golden.a;
+vec3 normalize_adaptive_gamma(vec3 linear_rgb, vec4 maps, vec4 golden) {
+    vec3 result = linear_rgb;
+    #if GAMMA_NORMALIZATION > 0.01
+    float variance = maps.g;
     float pattern_entropy = golden.g;
-    float brightness = luma.r;
+    float aesthetic_score = golden.a;
+    // Detecta áreas com problemas de gama (mid-tones esmagados)
+    bool has_gamma_issues = (variance < 0.03) && (pattern_entropy < 0.4);
+    if (has_gamma_issues) {
+        float Y = safe_luma(linear_rgb);
+        // Foco nos mid-tones onde a compressão é mais perceptível
+        float mid_tone_focus = smoothstep(0.2, 0.3, Y) * (1.0 - smoothstep(0.7, 0.8, Y));
+        if (mid_tone_focus > 0.1) {
+            // Cálculo adaptativo da expansão de gama
+            float gamma_power = 1.0 / (GAMMA_BASE_ADJUST * (1.0 - GAMMA_NORMALIZATION * 0.3));
+            float adaptive_factor = GAMMA_NORMALIZATION * (0.8 + 0.2 * aesthetic_score);
+            adaptive_factor *= (1.0 - variance * 2.0); // Menos força em áreas com textura
 
-    // Se é "bonito" mas caótico, aplicamos sanitização leve para preservar a essência
-    // Se é "feio" e caótico, aplicamos sanitização nuclear
-    float sanitization_level = 1.0 - (aesthetic_score * 0.7) + (pattern_entropy * 0.5);
-    sanitization_level = clamp(sanitization_level, 0.4, 1.0);
+            // Aplica normalização adaptativa
+            vec3 normalized = pow(linear_rgb, vec3(gamma_power));
+            result = mix(linear_rgb, normalized, adaptive_factor * mid_tone_focus);
 
-    // 📏 RAIO ADAPTATIVO:
-    float base_radius = 2.0;
-    float emotional_radius = base_radius * sanitization_level;
-    int radius = int(emotional_radius);
-
-    // 🔍 AMOSTRAGEM COM PESOS ADAPTATIVOS:
-    for (float y = -float(radius); y <= float(radius); y++) {
-        for (float x = -float(radius); x <= float(radius); x++) {
-            vec2 offset = vec2(x, y) * p * 1.2;
-            vec2 sample_uv = clamp(uv + offset, vec2(0.0), vec2(1.0));
-
-            // Peso baseado na distância
-            float dist = length(vec2(x, y));
-            float spatial_weight = exp(-dist * dist * 0.3);
-
-            // Peso adaptativo baseado na "beleza" da área
-            // Se é área bonita, damos mais peso aos pixels próximos para preservar detalhes
-            float aesthetic_weight = 0.8 + 0.2 * aesthetic_score;
-
-            float weight = spatial_weight * aesthetic_weight;
-            vec3 sample = sRGB_to_linear(texture(prev_tex, sample_uv).rgb);
-
-            accum += sample * weight;
-            total_weight += weight;
+            // Limite de segurança para evitar clipping
+            result = clamp(result, 0.0, MAX_GAMMA_EXPANSION);
         }
     }
-
-    return (total_weight > 1e-6) ? accum / total_weight : sRGB_to_linear(texture(prev_tex, uv).rgb);
+    #endif
+    return clamp(result, 0.0, 1.0);
 }
 
 // ===================================================================================
-// 2.3.4 🧠 FIREWALL TEMPORAL UNIFICADO COM INTELIGÊNCIA EMOCIONAL
+// 3.5 🧠 O ILUSIONISTA DE COR (SALIÊNCIA VS. SUPRESSÃO)
 // ===================================================================================
-vec3 unified_temporal_firewall_emotional(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma_maps, vec4 flow_refined, float flow_confidence) {
-    // 1. Limpeza Espacial com Inteligência Emocional
-    vec3 spatial_result = master_spatial_firewall_emotional(uv, p, linear_rgb, maps, golden, luma_maps);
-
-    // 2. Reconstrução Temporal Adaptativa
-    vec3 temporal_result;
-    float stream_confidence = maps.a; // O Alarme do S1
-    vec2 motion_vector = flow_refined.rg;
-    vec2 prev_uv = clamp(uv - motion_vector, vec2(0.0), vec2(1.0));
-
-    if (stream_confidence > 0.4) {
-        #ifdef PREV_tex
-        temporal_result = sRGB_to_linear(texture(PREV, prev_uv).rgb);
-        #else
-        temporal_result = spatial_result;
-        #endif
-    } else {
-        // 🚨 LÁZARO EMOCIONAL ATIVO:
-        // Não descartamos o frame anterior, mas o sanitizamos com inteligência emocional
-        #ifdef PREV_tex
-        temporal_result = emotional_emergency_sanitizer(PREV, prev_uv, p, golden, luma_maps);
-        // Boost adaptativo de confiança
-        float emotional_boost = 0.6 + golden.a * 0.2; // Áreas bonitas ganham mais confiança
-        flow_confidence = mix(flow_confidence, emotional_boost, 0.5);
-        #else
-        temporal_result = spatial_result;
-        #endif
-    }
-
-    // 🎚️ FATOR DE MISTURA COM PROTEÇÃO EMOCIONAL:
-    float mix_factor = flow_confidence;
-
-    // Proteções padrão
-    mix_factor *= (1.0 - smoothstep(0.05, 0.2, maps.g)); // Variância
-    mix_factor *= (1.0 - smoothstep(0.3, 0.8, maps.r));  // Borda
-
-    // 🎭 PROTEÇÃO EMOCIONAL:
-    // Em áreas bonitas, reduzimos a mistura temporal para preservar detalhes
-    mix_factor *= (1.0 - golden.a * 0.3);
-
-    return mix(spatial_result, temporal_result, clamp(mix_factor, 0.0, 1.0));
-}
-
+// Esta é a segunda parte do "joguinho", e a mais crítica.
+// 1. Áreas "Boas" (golden.a): Aumenta o vibrance (Saliência).
+// 2. Áreas "Ruins" (golden.g): Diminui ativamente a saturação (Supressão).
+// Isso "engana" o cérebro, forçando-o a ignorar o "lixo" (que fica
+// cinza) e focar na "beleza" (que fica vibrante).
 // ===================================================================================
-// 2.4 🌀 POLIMENTO ZONAL EMOCIONAL (A MAQUIAGEM INTELIGENTE)
-// ===================================================================================
-vec3 emotional_zonal_polish(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma_maps) {
+vec3 intelligent_vibrance_enhancement(vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
     vec3 result = linear_rgb;
-    #if ENABLE_MULTI_VECTOR_POLISH
-    float luma_val = luma_maps.r;
-    float shadow_dirt = luma_maps.g;   // Sujeira na sombra (do S1)
-    float chroma_risk = luma_maps.b;   // Risco cromático (do S1)
-    float mid_noise = luma_maps.a;     // Ruído em midtones (do S1)
-    float aesthetic_score = golden.a;  // Beleza emocional
+    #if VIBRANCE_ENHANCEMENT > 0.01
 
-    // 🌑 ZONA ABISSAL EMOCIONAL (Sombras com Inteligência):
-    if (luma_val < 0.25) {
-        // 🎭 DECISÃO EMOCIONAL:
-        // Se é "bonito" (aesthetic_score > 0.6), preservamos mais detalhe
-        // Se é "sujo" (shadow_dirt > 0.3), limpamos agressivamente
+    vec3 hsv = rgb2hsv(linear_to_sRGB(linear_rgb));
+    float sat = hsv.y;
 
-        float emotional_desat = CHROMA_NUKE_STRENGTH * chroma_risk * (1.0 - aesthetic_score * 0.4);
+    // INTELIGÊNCIA S1 v2.1
+    float chroma_risk = luma.b;    // Ruído colorido em sombras
+    float aesthetic = golden.a;    // Saliência
 
-        // 1. Dessaturação Emocional (remove cor azul/roxa em sombras)
-        if (emotional_desat > 0.1) {
-            vec3 gray = vec3(safe_luma(result));
-            result = mix(result, gray, emotional_desat);
-        }
-
-        // 2. Blur Adaptativo de Densidade:
-        float blur_strength = shadow_dirt * 0.8 * (1.0 - aesthetic_score * 0.5);
-        if (blur_strength > 0.1) {
-            vec3 blur = vec3(0.0);
-            // Kernel adaptativo baseado na "beleza"
-            float kernel_size = 1.5 + (1.0 - aesthetic_score) * 1.0;
-            for (float y = -kernel_size; y <= kernel_size; y++) {
-                for (float x = -kernel_size; x <= kernel_size; x++) {
-                    vec2 offset = vec2(x, y) * p * 1.5;
-                    blur += texture(GRX_COLOR_LINEAR, uv + offset).rgb;
-                }
-            }
-            float count = (2.0 * kernel_size + 1.0) * (2.0 * kernel_size + 1.0);
-            result = mix(result, blur / count, blur_strength);
-        }
+    // 1. Supressão de Ruído Cromático (Shadow Purifier)
+    // Se o S1 diz que é risco cromático e a área não é esteticamente relevante -> MATAR COR
+    if (chroma_risk > 0.2 && aesthetic < 0.4) {
+        sat *= (1.0 - chroma_risk * 0.8);
     }
 
-    // ☁️ ZONA DE NEBLINA EMOCIONAL (Midtones Ruidosos):
-    if (mid_noise > 0.08 && maps.r < 0.3) {
-        // 🎭 SÓ LIMPA SE NÃO FOR "BONITO":
-        float emotional_cleanup = mid_noise * (1.0 - aesthetic_score * 0.6);
-        if (emotional_cleanup > 0.1) {
-            vec3 creamy = vec3(0.0);
-            vec2 offsets[4] = vec2[](vec2(1,0), vec2(-1,0), vec2(0,1), vec2(0,-1));
-            for(int i=0; i<4; i++) {
-                creamy += texture(GRX_COLOR_LINEAR, uv + offsets[i]*p).rgb;
-            }
-            result = mix(result, creamy*0.25, emotional_cleanup * 1.8);
-        }
+    // 2. Boost de Saliência (Inteligente)
+    // Se é bonito -> Aumenta Vibrance
+    if (aesthetic > 0.6) {
+        float boost = (1.0 - sat) * sat * VIBRANCE_ENHANCEMENT * 0.5;
+        sat += boost;
     }
+
+    hsv.y = clamp(sat, 0.0, 0.95);
+    result = sRGB_to_linear(hsv2rgb(hsv));
     #endif
     return clamp(result, 0.0, 1.0);
 }
 
 // ===================================================================================
-// 2.5 🔧 RECONSTRUÇÃO LIGHT COM CONSCIÊNCIA ESTRUTURAL
+// 3.5.1 MÓDULO LCE MULTI-ESCALA ULTIMATE (S1 DRIVEN)
 // ===================================================================================
-vec3 structural_cnn_reconstruction(vec2 uv, vec2 p, vec3 cleaned_linear, vec4 maps, vec4 golden, vec4 luma) {
-    vec3 result = cleaned_linear;
-    #if ENABLE_CNN_LIGHT_RECON
-    float stream_confidence = maps.a;
-    float aesthetic_score = golden.a;
+// Escultor de Luz que utiliza a inteligência total do S1 para separar
+// "Textura Artística" de "Ruído Digital" e aplicar profundidade assimétrica.
+
+vec3 apply_multi_scale_lce(vec3 linear_input, vec4 maps, vec4 golden, vec4 temporal) {
+    // 1. LEITURA PROFUNDA DO S1 (O Cérebro)
+
+    // A. Estética e Harmonia (Golden)
+    float aesthetic_score = golden.a;  // Beleza geral
+    float harmonic_balance = golden.b; // 1.0 = Grão/Textura boa, 0.0 = Ruído caótico
+
+    // B. Estrutura e Defeitos (Maps)
+    float edge_strength = maps.r;      // Bordas fortes (risco de Halo)
+    float variance = maps.g;           // Atividade local
+    float stream_confidence = maps.a;  // O Alarme Geral
+
+    // C. Estabilidade (Temporal)
+    // Objetos parados permitem mais escultura 3D. Objetos rápidos escondem textura.
+    float stability = temporal.g;
+
+    // --- FILTRO DE PASSAGEM (Gatekeeper) ---
+    // Se o stream está quebrado, ou a área é lisa demais (céu), ou é borda pura: aborta.
+    if (stream_confidence < 0.1 || variance < 0.0005 || edge_strength > 0.8) {
+        return linear_input;
+    }
+
+    // 2. EXTRAÇÃO DE FREQUÊNCIA MÉDIA (A "Massa" da Textura)
+    // Usamos o blur otimizado (Cross-Sampling) para isolar o volume.
+    vec2 pixel = HOOKED_pt;
+    vec3 blurred = vec3(0.0);
+    float total_w = 0.0;
+
+    // Kernel Cruzado 5-tap (Eficiência máxima)
+    vec2 offsets[5] = vec2[](vec2(0,0), vec2(1.5, 1.5), vec2(-1.5, -1.5), vec2(1.5, -1.5), vec2(-1.5, 1.5));
+
+    for(int i=0; i<5; i++) {
+        vec3 samp = texture(GRX_COLOR_LINEAR, HOOKED_pos + offsets[i] * pixel).rgb;
+        // Peso por luma inverso (Evita contaminar sombras com luz de vizinhos brilhantes)
+        float w = 1.0 / (1.0 + luminance(samp) * 2.0 + 0.1);
+        blurred += samp * w;
+        total_w += w;
+    }
+    blurred /= total_w;
+
+    // O "Delta" (A Textura isolada)
+    vec3 texture_delta = linear_input - blurred;
+
+    // 3. CÁLCULO DE FORÇA GUIADO PELO S1
+
+    // Base: Começamos suave
+    float lce_strength = 0.4;
+
+    // Fator 1: Harmonia (O Grande Segredo)
+    // Se for grão de filme (harmônico), aumentamos. Se for bloco de compressão, zeramos.
+    lce_strength *= smoothstep(0.2, 0.8, harmonic_balance);
+
+    // Fator 2: Estabilidade Temporal
+    // Se o objeto é sólido e estável, podemos esculpir fundo (efeito 3D).
+    // Se move muito, reduzimos para evitar "sizzling" (fervilhado).
+    lce_strength *= (0.5 + 0.5 * stability);
+
+    // Fator 3: Proteção de Halo (Anti-Ringing)
+    // Perto de bordas fortes (edge_strength), reduzimos a força para não criar brilho falso.
+    lce_strength *= (1.0 - edge_strength * 0.8);
+
+    // Fator 4: Estética
+    // Só investimos GPU onde a imagem vale a pena.
+    lce_strength *= aesthetic_score;
+
+    // 4. ESCULTURA ASSIMÉTRICA (Dark vs Light)
+    // Textura real é feita de sombras (poros, tramas, ranhuras).
+    // Halos digitais são feitos de luz.
+    // -> Enfatizamos o escuro, seguramos o claro.
+
+    float luma_delta = luminance(texture_delta);
+
+    // Se o delta é positivo (brilho) -> reduz força (0.6x)
+    // Se o delta é negativo (sombra/profundidade) -> aumenta força (1.3x)
+    float asymmetry = (luma_delta > 0.0) ? 0.6 : 1.3;
+
+    // Proteção de Sombras Profundas (Shadow Protect)
+    // Não queremos realçar ruído no preto absoluto.
+    float luma_base = luminance(linear_input);
+    float shadow_protect = smoothstep(0.02, 0.15, luma_base);
+
+    // 5. APLICAÇÃO FINAL
+    vec3 final_delta = texture_delta * lce_strength * asymmetry * shadow_protect;
+
+    return linear_input + final_delta;
+}
+
+// ===================================================================================
+// 3.6 🧴 MÁSCARA DE TONS DE PELE (OTIMIZADA)
+// ===================================================================================
+float skin_tone_mask(vec3 srgb) {
+    #if SKIN_TONE_PROTECTION > 0.01
+    float Y = safe_luma(srgb);
+    // Intervalo de luminância para tons de pele
+    if (Y > SKIN_TONE_RANGE_MIN && Y < SKIN_TONE_RANGE_MAX) {
+        // Relações de cor para detecção de pele
+        float r_g_ratio = srgb.r / max(srgb.g, 0.001);
+        float r_b_ratio = srgb.r / max(srgb.b, 0.001);
+        bool skin_range = (r_g_ratio > 1.0 && r_g_ratio < 2.0) &&
+        (r_b_ratio > 1.3 && r_b_ratio < 2.8);
+        if (skin_range) {
+            float sat = saturation(srgb);
+            // Mapeamento suave para tons de pele
+            float skinness = smoothstep(0.1, 0.4, sat) *
+            smoothstep(0.2, 0.4, Y) *
+            (1.0 - smoothstep(0.7, 0.8, Y));
+            return skinness * SKIN_TONE_PROTECTION;
+        }
+    }
+    #endif
+    return 0.0;
+}
+// ===================================================================================
+// 3.7 🔍 ANTI-ALIASING DIRECIONAL COM PRESERVAÇÃO DE DETALHES (OTIMIZADO)
+// ===================================================================================
+vec3 directional_aa_with_detail_preservation(vec2 uv, vec2 p, vec3 linear_rgb, vec4 maps, vec4 temporal) {
+    vec3 result = linear_rgb;
+    #if EDGE_PROTECTION_STRENGTH > 0.01
     float edge_strength = maps.r;
-    float brightness = luma.r;
+    float motion = temporal.r;
+    // Só aplica AA em bordas problemáticas com proteção de detalhes
+    if (edge_strength > 0.08 && edge_strength < 0.8) {
+        // Amostras para detecção de direção
+        vec3 north = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv + vec2(0.0,  p.y), vec2(0.0), vec2(1.0))).rgb);
+        vec3 south = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv - vec2(0.0,  p.y), vec2(0.0), vec2(1.0))).rgb);
+        vec3 east = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv + vec2( p.x, 0.0), vec2(0.0), vec2(1.0))).rgb);
+        vec3 west = sRGB_to_linear(texture(STAGE2_OUTPUT, clamp(uv - vec2( p.x, 0.0), vec2(0.0), vec2(1.0))).rgb);
+        float luma_n = safe_luma(north);
+        float luma_s = safe_luma(south);
+        float luma_e = safe_luma(east);
+        float luma_w = safe_luma(west);
+        float luma_c = safe_luma(linear_rgb);
+        // Detecta direção predominante da borda
+        float edge_h = abs(luma_e - luma_w);
+        float edge_v = abs(luma_n - luma_s);
+        float max_edge = max(edge_h, edge_v);
+        if (max_edge > 0.08) {
+            // Suavização direcional com preservação de detalhes
+            vec3 blend_h = (east + west) * 0.5;
+            vec3 blend_v = (north + south) * 0.5;
+            float mix_ratio = edge_v / (edge_h + edge_v + 1e-6);
+            vec3 blended = mix(blend_h, blend_v, mix_ratio);
 
-    // 🎭 SÓ RECONSTRÓI SE FOR SEGURO E VALER A PENA:
-    if (stream_confidence > 0.5 && aesthetic_score > 0.4) {
-        // 🔍 ANÁLISE ESTRUTURAL LOCAL:
-        vec3 blur = vec3(0.0);
-        vec2 offsets[4] = vec2[](vec2(1,0), vec2(-1,0), vec2(0,1), vec2(0,-1));
+            // Força adaptativa com proteção de detalhes
+            float aa_strength = 0.6 * EDGE_PROTECTION_STRENGTH;
+            aa_strength *= smoothstep(0.08, 0.5, max_edge);
+            aa_strength *= (1.0 - motion * 0.7 * (1.0 - MOTION_ADAPTIVE_STRENGTH));
 
-        for(int i=0; i<4; i++) {
-            blur += texture(GRX_COLOR_LINEAR, uv + offsets[i]*p).rgb;
-        }
-        blur *= 0.25;
+            // Preservação de crominância com limite anti-perda de detalhes
+            float luma_old = luma_c;
+            float luma_new = safe_luma(blended);
+            vec3 chroma = linear_rgb - vec3(luma_old);
 
-        vec3 detail = cleaned_linear - blur;
-
-        // 🎚️ FORÇA ADAPTATIVA:
-        float recon_strength = RECONSTRUCTION_STRENGTH;
-        recon_strength *= aesthetic_score;           // Mais força em áreas bonitas
-        recon_strength *= (1.0 - edge_strength * 0.5); // Menos força em bordas já nítidas
-        recon_strength *= (1.0 - brightness * 0.3);  // Menos força em highlights
-
-        // ✨ RECONSTRUÇÃO DE MICRO-CONTRASTE:
-        result += detail * recon_strength * 0.8;
-
-        // 🎨 RECONSTRUÇÃO CROMÁTICA SUAVE:
-        if (saturation(cleaned_linear) < 0.3 && aesthetic_score > 0.6) {
-            vec3 hsv = rgb2hsv(linear_to_sRGB(cleaned_linear));
-            hsv.y = min(hsv.y * 1.15, 1.0); // Aumenta saturação suavemente
-            hsv.z = hsv.z * 0.98 + 0.02;    // Ajuste de brilho
-            result = mix(result, sRGB_to_linear(hsv2rgb(hsv)), recon_strength * 0.3);
+            // Controle de preservação de detalhes
+            float detail_preservation = mix(0.9, 0.98, aa_strength);
+            result = vec3(mix(luma_old, luma_new, aa_strength)) + chroma * detail_preservation;
         }
     }
     #endif
@@ -700,343 +475,282 @@ vec3 structural_cnn_reconstruction(vec2 uv, vec2 p, vec3 cleaned_linear, vec4 ma
 }
 
 // ===================================================================================
-// 2.6 🎯 SISTEMA DE CONTROLE DE QUALIDADE EMOCIONAL
+// 3.7.1 🌿 TEXTURA ORGÂNICA (WEIBULL GRAIN - NOVO)
 // ===================================================================================
-float emotional_cleanliness_score(vec3 original, vec3 cleaned, vec4 maps, vec4 golden) {
-    float diff = length(original - cleaned);
+// Adiciona textura de "Filme" em áreas que ficaram plásticas (lisas demais).
+vec3 organic_texture_synthesis(vec2 uv, vec3 linear_rgb, vec4 maps, vec4 golden, vec4 luma) {
+    vec3 result = linear_rgb;
+    // Defina a opacidade do grão aqui ou no config principal (0.6 é um bom padrão)
+    float grain_opacity = 0.6;
 
-    // 🎭 SCORE EMOCIONAL:
-    // Não queremos diferença zero - queremos diferença que faça sentido emocionalmente
-    float emotional_score = 1.0;
+    float aesthetic = golden.a;
+    float entropy = golden.g;   // Detalhe existente
+    // No novo S1, luma.g é "Shadow Dirt". Se for baixo, é liso.
+    // Usamos maps.g (Variance) invertido como proxy de lisura também.
+    float smoothness = 1.0 - maps.g;
 
-    // Penaliza se removeu muito de áreas bonitas
-    emotional_score -= golden.a * diff * 0.6;
+    // Só aplicamos grão onde está liso E tem importância estética
+    float grain_need = smoothness * (1.0 - entropy) * aesthetic;
 
-    // Bônus se removeu ruído de áreas feias
-    emotional_score += (1.0 - golden.a) * (1.0 - exp(-diff * 5.0)) * 0.4;
+    if (grain_need > 0.2) {
+        // Gerador Weibull Simplificado (Grão Natural)
+        vec2 seed = uv * vec2(12.9898, 78.233) + 1.0;
+        float n = fract(sin(dot(seed, seed)) * 43758.5453);
+        float weibull = pow(-log(1.0 - n), 1.0/1.5);
+        float grain = (weibull - 0.9) * 0.03; // Amplitude fina
 
-    // Proteção de bordas
-    emotional_score += maps.r * 0.2;
+        // Modulação por Luminância (Grão vive nos midtones, não no preto/branco)
+        float Y = safe_luma(linear_rgb);
+        float mask = smoothstep(0.05, 0.2, Y) * (1.0 - smoothstep(0.9, 1.0, Y));
 
-    // Penalidade por artefatos
-    if (detect_processing_artifacts(original, cleaned, 0.2)) {
-        emotional_score *= 0.8;
+        result += grain * grain_opacity * grain_need * mask;
     }
-
-    return clamp(emotional_score, 0.0, 1.0);
-}
-
-bool should_apply_emotional_processing(vec4 maps, vec4 golden, float cost) {
-    float stream_confidence = maps.a;
-    float aesthetic_score = golden.a;
-
-    // 🎭 DECISÃO EMOCIONAL:
-    // Processa se: confiança é alta OU é área feia (vale a pena limpar)
-    float emotional_decision = stream_confidence + (1.0 - aesthetic_score) * 0.7;
-
-    return emotional_decision > (0.4 + cost * 0.1);
-}
-
-// ===================================================================================
-// 2.6.1 🧠 SOLUCIONADOR DE CAOS (SIMULAÇÃO DE PESOS NEURAIS PARA ANIME)
-// ===================================================================================
-float get_luma_weight(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
-
-vec3 chaos_neural_solver(vec2 uv, vec2 p, vec3 current, vec4 maps, vec4 temporal) {
-    float chaos_level = 1.0 - maps.a;    // 1.0 = Caos Total
-    float is_line = maps.r;              // É uma linha?
-
-    if (chaos_level < 0.2) return current; // Se está calmo, não toca
-
-    float W_LINE = 1.5;   // Escurecer linhas
-    float W_NOISE = 2.0;  // Achatar fundo
-    float W_FLASH = 0.8;  // Recuperar flash
-
-    vec3 result = current;
-
-    // A. DESTRUIÇÃO DE TRAÇO (Recuperação de Linha)
-    if (is_line > 0.2) {
-        vec3 n = texture(GRX_COLOR_LINEAR, uv + vec2(0, -1)*p).rgb;
-        vec3 s = texture(GRX_COLOR_LINEAR, uv + vec2(0,  1)*p).rgb;
-        vec3 w = texture(GRX_COLOR_LINEAR, uv + vec2(-1, 0)*p).rgb;
-        vec3 e = texture(GRX_COLOR_LINEAR, uv + vec2( 1, 0)*p).rgb;
-
-        vec3 darkest = min(current, min(min(n, s), min(w, e)));
-        float push = (get_luma_weight(current) - get_luma_weight(darkest)) * W_LINE * chaos_level;
-        result = mix(current, darkest, clamp(push, 0.0, 0.8));
-    }
-    // B. EXPLOSÃO DE COMPRESSÃO (Limpeza de Fundo)
-    else {
-        vec3 avg = textureLod(GRX_COLOR_LINEAR, uv, 2.0).rgb;
-        if (length(current - avg) > 0.1) {
-            result = mix(current, avg, 0.6 * chaos_level * W_NOISE);
-        }
-    }
-
-    // C. FLASH BRANCO
-    if (temporal.a > 0.5) result *= (1.0 - temporal.a * 0.2 * W_FLASH);
-
     return result;
 }
 
-
 // ===================================================================================
-// 2.6.2 🧠 NEURAL RESNET EMOCIONAL (SISR HÍBRIDO PARA LIVE ACTION)
+// 3.7.2 🏥 GRADING DE PELE (NOVO)
 // ===================================================================================
-// Uma Mini-CNN simulada que entende a diferença entre ruído e textura orgânica.
-// Baseada em Wavelets Direcionais e Atenção Emocional.
-// ===================================================================================
+// Empurra tons de pele "doentes" para "saudáveis" usando detecção contextual
+vec3 skin_tone_grading(vec3 linear_rgb, vec4 golden) {
+    vec3 result = linear_rgb;
+    float grading_strength = 0.8; // Força padrão
 
-// Função de Ativação PReLU Adaptativa
-vec3 activation_prelu_emotional(vec3 x, float alpha, float emotional_confidence) {
-    // Menos supressão em áreas emocionalmente importantes (preserva textura de pele)
-    float adaptive_alpha = alpha * (1.0 - emotional_confidence * 0.7);
-    return max(x, 0.0) + min(x, 0.0) * adaptive_alpha;
-}
+    vec3 hsv = rgb2hsv(linear_to_sRGB(linear_rgb));
 
-vec3 emotional_neural_resnet(vec2 uv, vec2 p, vec3 input_linear, vec4 maps, vec4 temporal, vec4 golden, vec4 luma) {
-    // 1. GATILHO DE CONTEÚDO (Live Action vs Anime)
-    float entropy = golden.g;
-    float skin_risk = luma.b; // Risco cromático em sombra costuma ser pele em vídeos ruins
-    float aesthetic = golden.a;
+    // Intervalo de pele amplo
+    bool is_skin_range = (hsv.x > 0.0 && hsv.x < 0.12) && (hsv.y > 0.15 && hsv.y < 0.7);
 
-    // Live Action = Alta Entropia OU (Pele Detectada + Alta Estética)
-    float is_live_action = smoothstep(0.4, 0.7, entropy) + (skin_risk * aesthetic);
-    float chaos = 1.0 - maps.a;
+    if (is_skin_range) {
+        float target_hue = 0.04; // Laranja/Pêssego saudável
+        float diff = target_hue - hsv.x;
+        // Aplica correção suave
+        hsv.x += diff * grading_strength * 0.5;
 
-    // Só ativa se for Live Action (>0.4) E tiver algum caos (>0.2)
-    if (is_live_action < 0.4 || chaos < 0.2) return input_linear;
+        // Boost sutil se estiver muito pálido
+        if (hsv.y < 0.3) hsv.y *= 1.1;
 
-    // 2. EXTRAÇÃO DE CARACTERÍSTICAS DIRECIONAIS (Wavelets Otimizados)
-    // Analisa contrastes em 4 direções para achar estrutura real
-    vec3 center = input_linear;
-    vec3 horiz = texture(GRX_COLOR_LINEAR, uv + vec2(2,0)*p).rgb - texture(GRX_COLOR_LINEAR, uv - vec2(2,0)*p).rgb;
-    vec3 vert  = texture(GRX_COLOR_LINEAR, uv + vec2(0,2)*p).rgb - texture(GRX_COLOR_LINEAR, uv - vec2(0,2)*p).rgb;
-    vec3 diag1 = texture(GRX_COLOR_LINEAR, uv + vec2(1,1)*p).rgb - texture(GRX_COLOR_LINEAR, uv - vec2(1,1)*p).rgb;
-    vec3 diag2 = texture(GRX_COLOR_LINEAR, uv + vec2(1,-1)*p).rgb - texture(GRX_COLOR_LINEAR, uv - vec2(1,-1)*p).rgb;
-
-    // Fusão das características (Max Pooling Suave)
-    vec3 features = (horiz*horiz + vert*vert + diag1*diag1 + diag2*diag2) * 0.25;
-    features = sqrt(features); // Magnitude do detalhe
-
-    // 3. ATENÇÃO EMOCIONAL (O "Coração")
-    // Onde devemos preservar o detalhe?
-    float face_importance = aesthetic * maps.r; // Bordas em áreas bonitas (rostos)
-    float skin_importance = skin_risk * aesthetic; // Tons de pele
-
-    float emotional_confidence = clamp(face_importance + skin_importance, 0.0, 1.0);
-
-    // Filtramos o ruído: Detalhes em áreas escuras e sem importância são suprimidos
-    float noise_suppression = 1.0;
-    if (luma.r < 0.2) noise_suppression = 0.3 + 0.7 * emotional_confidence;
-
-    features *= noise_suppression;
-    features = activation_prelu_emotional(features, 0.1, emotional_confidence);
-
-    // 4. RECONSTRUÇÃO RESIDUAL COM PROTEÇÃO DE ESQUELETO
-    // Base suave (fundo limpo)
-    vec3 base_smooth = (
-        texture(GRX_COLOR_LINEAR, uv + vec2(0,1)*p).rgb +
-        texture(GRX_COLOR_LINEAR, uv + vec2(0,-1)*p).rgb +
-        texture(GRX_COLOR_LINEAR, uv + vec2(1,0)*p).rgb +
-        texture(GRX_COLOR_LINEAR, uv + vec2(-1,0)*p).rgb
-    ) * 0.25;
-
-    // Reinjetamos o detalhe validado (feature) na base suave
-    // A força da injeção depende do caos: mais caos = mais reconstrução necessária
-    vec3 reconstructed = base_smooth + features * (1.0 + chaos * 0.5);
-
-    // Proteção de Esqueleto: Se havia uma borda forte original, traga ela de volta
-    if (maps.r > 0.3) {
-        reconstructed = mix(reconstructed, input_linear, maps.r * 0.5);
+        result = sRGB_to_linear(hsv2rgb(hsv));
+        // Mistura baseada na confiança estética do S1 (para não pintar paredes de laranja)
+        result = mix(linear_rgb, result, golden.a);
     }
-
-    // 5. MISTURA FINAL
-    // Misturamos o resultado reconstruído com o original baseado na certeza de que é Live Action
-    float blend = smoothstep(0.2, 0.6, chaos) * clamp(is_live_action, 0.0, 1.0);
-
-    return mix(input_linear, reconstructed, blend);
+    return result;
 }
 
 // ===================================================================================
-// 2.7 🧠 HOOK PRINCIPAL (O CIRURGIÃO DE FLUXO EMOCIONAL)
+// 3.8 🎯 SISTEMA DE CONTROLE DE QUALIDADE
+// ===================================================================================
+float calculate_restoration_confidence(vec3 original_linear, vec3 restored_srgb, vec4 maps, vec4 golden) {
+    float confidence = 1.0;
+    vec3 restored_linear = sRGB_to_linear(restored_srgb);
+    // Diferença geral (moderada é boa)
+    float overall_diff = length(original_linear - restored_linear);
+    confidence -= overall_diff * 0.4;
+    // Preservação de detalhes
+    float detail_preservation = 1.0 - clamp(maps.g * overall_diff * 1.5, 0.0, 1.0);
+    confidence += detail_preservation * 0.3;
+    // Melhoria estética
+    float aesthetic_improvement = golden.a;
+    confidence += aesthetic_improvement * 0.2;
+    // Penalidade por artefatos
+    if (detect_processing_artifacts(original_linear, restored_linear, 0.25)) {
+        confidence *= 0.8;
+    }
+    return clamp(confidence, 0.0, 1.0);
+}
+// Sistema de decisão para aplicação de restauração
+bool should_apply_restoration(vec4 maps, vec4 temporal, vec4 golden, float stage) {
+    float confidence = maps.a;
+    float motion = temporal.r;
+    float aesthetic_score = golden.a;
+    // Fatores positivos
+    bool high_confidence = confidence > 0.6;
+    bool low_motion = motion < (0.4 - stage * 0.2);
+    bool good_aesthetics = aesthetic_score > 0.5;
+    // Combinação com pesos adaptativos
+    float decision_score = (float(high_confidence) * 1.2 +
+    float(low_motion) * 1.0 +
+    float(good_aesthetics) * 0.8) / 3.0;
+    // Ajuste baseado no estágio do processamento
+    float stage_factor = 0.7 - stage * 0.1;
+    return decision_score > stage_factor;
+}
+
+// ===================================================================================
+// 3.9 🧠 HOOK PRINCIPAL - RESTAURAÇÃO DE INTEGRIDADE
 // ===================================================================================
 //!HOOK MAIN
-//!DESC S2 - Firewall Estrutural (Chaos & Anime Aware)
+//!DESC S3 - Módulo de Restauração de Integridade (Linear Tunnel Ready)
 //!BIND HOOKED
+//!BIND STAGE2_OUTPUT
 //!BIND GRX_MAPS
 //!BIND GRX_TEMPORAL
 //!BIND GRX_GOLDEN
-//!BIND GRX_LUMA
-//!BIND GRX_COLOR_LINEAR
-//!BIND GRX_FLOW_REFINED
-//!BIND PREV
-//!SAVE STAGE2_OUTPUT
+//!SAVE STAGE3_ENHANCED
 //!COMPONENTS 4
 vec4 hook() {
     vec2 uv = HOOKED_pos;
     vec2 p = HOOKED_pt;
 
-    // 1. VALIDAÇÃO DE ENTRADA (Alfândega S1)
-    vec4 maps = validate_s1_data(GRX_MAPS_tex(uv));
+    // 3.9.1 CARREGA IMAGEM (PREPARADO PARA TÚNEL LINEAR)
 
-    // Safety Bypass: Se S1 falhou, retorna original e avisa (alpha=0)
-    if (maps.a == 0.0) return vec4(linear_to_sRGB(GRX_COLOR_LINEAR_tex(uv).rgb), 0.0);
+    // NOTA: Se você JÁ alterou o S2 para sair em Linear, remova o sRGB_to_linear abaixo.
+    // Se o S2 ainda sai em sRGB, mantenha assim por enquanto.
+    vec3 cleaned_input = texture(STAGE2_OUTPUT, clamp(uv, vec2(0.0), vec2(1.0))).rgb;
 
-    vec4 temporal = GRX_TEMPORAL_tex(uv);
-    vec4 golden = GRX_GOLDEN_tex(uv);
-    vec4 luma = GRX_LUMA_tex(uv);
-    vec4 flow_refined = GRX_FLOW_REFINED_tex(uv);
-    vec3 input_linear = GRX_COLOR_LINEAR_tex(uv).rgb;
+    // ATENÇÃO: Comente a linha abaixo APENAS se o S2 já estiver entregando Linear puro.
+    vec3 cleaned_linear = sRGB_to_linear(cleaned_input);
+    // vec3 cleaned_linear = cleaned_input; // <-- Use esta se o S2 já for Linear.
 
-    // Variável de trabalho unificada
-    vec3 current = input_linear;
-
-    // 2. DETECTOR DE ANIME
-    // Anime = Baixa Entropia + Baixa Variância
-    float is_anime_score = (1.0 - smoothstep(0.2, 0.6, golden.g)) * (1.0 - smoothstep(0.01, 0.05, maps.g));
-
-    // 3. LIMPEZA CINÉTICA (Primeiro Passo)
-    if (ENABLE_MULTI_VECTOR_POLISH) {
-        current = kinetic_flow_cleaning(uv, p, current, maps, temporal);
-    }
-
-    // 4. SOLUCIONADORES DE CAOS (Dual-Core: Anime vs ResNet Emocional)
-
-    // ROTA A: ANIME (Traços e Cores Chapadas)
-    // Detectamos anime se a entropia for baixa E a variância for baixa (áreas lisas)
-    if (is_anime_score > 0.6) {
-        #if ENABLE_ANIME_CHAOS_SOLVER
-        vec3 solved = chaos_neural_solver(uv, p, current, maps, temporal);
-        // Aplica com força proporcional à certeza de que é anime
-        current = mix(current, solved, smoothstep(0.6, 0.9, is_anime_score));
-        #endif
-    }
-    // ROTA B: LIVE ACTION (ResNet Emocional)
-    else {
-        // Se não for anime, ativamos a ResNet que entende pele e textura
-        // Ela só age se houver caos real e conteúdo orgânico
-        vec3 restored = emotional_neural_resnet(uv, p, current, maps, temporal, golden, luma);
-
-        // Mistura proporcional à "não-anime-za" (certeza de ser real)
-        current = mix(current, restored, (1.0 - is_anime_score));
-    }
-
-    // 5. DECISÃO EMOCIONAL DE PROCESSAMENTO
-    // Vale a pena rodar o denoise pesado?
-    if (should_apply_emotional_processing(maps, golden, 0.0)) {
-
-        // A. Limpeza Espacial + Temporal (Firewall Unificado)
-        vec3 cleaned = unified_temporal_firewall_emotional(uv, p, current, maps, golden, luma, flow_refined, temporal.b);
-
-        // Mistura de Emergência
-        float emergency_mix = 1.0 - smoothstep(0.0, 0.4, maps.a);
-        float emotional_strength = mix(DENOISE_STRENGTH, 1.0, emergency_mix);
-        emotional_strength *= (1.0 - golden.a * 0.4); // Protege beleza
-
-        current = mix(current, cleaned, emotional_strength);
-    }
-
-    // 6. POLIMENTO ZONAL
-    if (ENABLE_MULTI_VECTOR_POLISH && should_apply_emotional_processing(maps, golden, 0.3)) {
-        current = emotional_zonal_polish(uv, p, current, maps, golden, luma);
-    }
-
-    // 7. RECONSTRUÇÃO LEVE
-    if (should_apply_emotional_processing(maps, golden, 0.5)) {
-        current = structural_cnn_reconstruction(uv, p, current, maps, golden, luma);
-    }
-
-    // 8. SEGURANÇA FINAL INTELIGENTE (Safety Net)
-    // Verifica se "current" não se desviou demais de "input_linear" de forma errada
-    if (detect_processing_artifacts(input_linear, current, maps, golden, 0.15)) {
-        // Soft Fallback: Recupera 70% do original se detectar erro grave
-        current = mix(input_linear, current, 0.3);
-    }
-
-    // Cálculo final do score de limpeza
-    float score = emotional_cleanliness_score(input_linear, current, maps, golden);
-
-    // Saída (sRGB para compatibilidade com S3 padrão)
-    return vec4(linear_to_sRGB(current), score);
-}
-
-// ===================================================================================
-// 2.8 🌀 POLIMENTO DE FLUXO COM CONSCIÊNCIA EMOCIONAL (MANTIDO OTIMIZADO)
-// ===================================================================================
-// Mantemos a lógica excelente do polimento de fluxo, mas adicionamos proteção emocional
-vec2 emotional_refine_optical_flow(vec2 uv, vec2 p, vec4 maps, vec4 temporal, vec4 golden) {
-    float confidence = maps.a;
-    if (confidence < 0.05) return vec2(0.0);
-
-    vec2 center_flow = temporal.rg;
-
-    // 🎭 ANÁLISE EMOCIONAL DO FLUXO:
-    // Em áreas bonitas, somos mais conservadores com o fluxo
-    // Em áreas feias/chaóticas, somos mais agressivos na correção
-    float emotional_conservatism = 0.7 + golden.a * 0.3;
-
-    #ifdef PREV_tex
-    vec2 test_uv = uv - center_flow;
-    if(test_uv.x > 0.0 && test_uv.x < 1.0 && test_uv.y > 0.0 && test_uv.y < 1.0) {
-        vec3 curr_col = texture(HOOKED, uv).rgb;
-        vec3 prev_col = texture(PREV, test_uv).rgb;
-        float reprojection_error = length(curr_col - prev_col);
-
-        // 🎚️ ERRO ADAPTATIVO:
-        float max_error = 0.15 + (1.0 - golden.a) * 0.1; // Áreas feias toleram mais erro
-        float validity = 1.0 - smoothstep(0.1 * emotional_conservatism, max_error, reprojection_error);
-        confidence *= validity;
-    }
-    #endif
-
-    if (confidence < 0.1) return vec2(0.0);
-
-    // Restante da lógica mantida (excelente), mas com pesos adaptativos
-    vec2 refined_flow = vec2(0.0);
-    float total_weight = 0.0;
-    int radius = (confidence > 0.6) ? 2 : 1;
-
-    for (int j = -radius; j <= radius; j++) {
-        for (int i = -radius; i <= radius; i++) {
-            vec2 offset = vec2(i, j) * p;
-            vec2 neighbor_uv = clamp(uv + offset, vec2(0.0), vec2(1.0));
-            vec2 neighbor_flow = GRX_TEMPORAL_tex(neighbor_uv).rg;
-            vec4 neighbor_maps = GRX_MAPS_tex(neighbor_uv);
-
-            // Pesos com consciência emocional
-            float spatial = exp(-(float(i*i + j*j)) * 0.5);
-            float variance_w = 1.0 - smoothstep(0.01, 0.05, neighbor_maps.g);
-            float coherence = dot(normalize(center_flow + 1e-6), normalize(neighbor_flow + 1e-6));
-            float coherence_w = smoothstep(0.0, 0.5 * emotional_conservatism, coherence);
-
-            float weight = spatial * variance_w * coherence_w;
-            refined_flow += neighbor_flow * weight;
-            total_weight += weight;
-        }
-    }
-
-    if (total_weight < 1e-6) return center_flow * max(0.0, confidence - 0.2);
-
-    refined_flow /= total_weight;
-    refined_flow *= (1.0 - (1.0 - smoothstep(0.0, 0.01, maps.g)));
-    return refined_flow;
-}
-
-//!HOOK GRX_FLOW_REFINED_HOOK
-//!DESC S2.5 - Polidor de Fluxo com Inteligência Emocional
-//!BIND GRX_TEMPORAL
-//!BIND GRX_MAPS
-//!BIND GRX_GOLDEN
-//!BIND HOOKED
-//!SAVE GRX_FLOW_REFINED
-//!COMPONENTS 2
-vec4 hook_flow_refine() {
-    vec2 uv = HOOKED_pos;
-    vec2 p = HOOKED_pt;
+    // 3.9.2 CARREGA MAPAS
     vec4 maps = GRX_MAPS_tex(uv);
     vec4 temporal = GRX_TEMPORAL_tex(uv);
     vec4 golden = GRX_GOLDEN_tex(uv);
-    vec2 polished_flow = emotional_refine_optical_flow(uv, p, maps, temporal, golden);
-    return vec4(polished_flow, 0.0, 1.0);
+
+    // 3.9.2.A 🚨 O ALARME S1 (S0 Confidence)
+    float s0_confidence = maps.a;
+
+    // 3.9.3 CORREÇÃO DE SUBAMOSTRAGEM YUV
+    vec3 corrected_linear = correct_yuv420_subsampled(uv, p, cleaned_linear, maps);
+
+    // 3.9.4 RESTAURAÇÃO EM CASCATA (LINEAR)
+    vec3 restored_linear = corrected_linear;
+
+    // BLOCO DE SEGURANÇA: Só processa se o S1 confiar no stream (> 1%)
+    if (s0_confidence > 0.01) {
+
+        // Estágio 0.5: Grading de Pele (NOVO - Antes de tudo para garantir cor base)
+        restored_linear = skin_tone_grading(restored_linear, golden);
+
+        // Estágio 1: Restauração de Micro-Contraste (Atualizado)
+        if (should_apply_restoration(maps, temporal, golden, 0.0)) {
+            restored_linear = restore_local_contrast(restored_linear, maps, golden);
+        }
+
+        // Estágio 2: Normalização Adaptativa de Gama
+        if (should_apply_restoration(maps, temporal, golden, 0.1)) {
+            restored_linear = normalize_adaptive_gamma(restored_linear, maps, golden);
+        }
+
+        // Estágio 2.5: Síntese de Textura Orgânica (NOVO - Adiciona "matéria" antes do AA)
+        restored_linear = organic_texture_synthesis(uv, restored_linear, maps, golden, luma);
+
+        // Estágio 3: Anti-Aliasing Direcional
+        if (should_apply_restoration(maps, temporal, golden, 0.2)) {
+            restored_linear = directional_aa_with_detail_preservation(uv, p, restored_linear, maps, temporal);
+        }
+
+        // Estágio 4: Vibrance Inteligente (Atualizado - agora pede 'luma')
+        if (should_apply_restoration(maps, temporal, golden, 0.3)) {
+            // NOTA: Adicionei 'luma' na chamada da função
+            restored_linear = intelligent_vibrance_enhancement(restored_linear, maps, golden, luma);
+        }
+
+        // Estágio 5: Módulo LCE Multi-Escala Ultimate
+        // Mantém como estava, pois este é o seu "peso pesado"
+        restored_linear = apply_multi_scale_lce(restored_linear, maps, golden, temporal);
+    }
+
+    // Se s0_confidence < 0.01, o 'restored_linear' passa direto (Bypass), evitando amplificar defeitos.
+
+    // 3.9.5 SAÍDA (MANTÉM LINEAR PARA O S4)
+    vec3 final_output = max(restored_linear, vec3(0.0));
+
+    // 3.9.6 CÁLCULO DE CONFIANÇA DA RESTAURAÇÃO
+    float restoration_confidence = calculate_cleanliness_score(cleaned_linear, final_output, maps, golden);
+    restoration_confidence = clamp(restoration_confidence, 0.0, 1.0);
+
+    // Salva em LINEAR (RGBA32F preserva os dados para o S4 fazer o Upscale)
+    return vec4(final_output, restoration_confidence);
+}
+
+// ===================================================================================
+// 3.10 🧠 (MÓDULO ATUALIZADO) EXTRATOR DE DETALHES ÁUREOS "CURADOR"
+// ===================================================================================
+// OBJETIVO: Sincronizado com o S2 "Architect+".
+// 1. Confia mais na estrutura do S2 (relaxa a guarda).
+// 2. Respeita o "Polimento Nuclear" (não reinjeta ruído em sombras).
+// 3. Purifica o detalhe (remove cor do ruído).
+// ===================================================================================
+//!HOOK GRX_DETAIL_HOOK
+//!DESC S3.5 - Extrator de Detalhes Curador (S2-Aware)
+//!BIND GRX_COLOR_LINEAR
+//!BIND STAGE2_OUTPUT
+//!BIND GRX_GOLDEN
+//!BIND GRX_MAPS
+//!BIND GRX_LUMA
+//!SAVE GRX_DETAIL_MAP
+//!COMPONENTS 3
+vec4 hook_detail_extractor() {
+    vec2 uv = HOOKED_pos;
+
+    // 1. ANÁLISE DE CONTEXTO
+    vec4 maps = GRX_MAPS_tex(uv);
+    float stream_confidence = maps.a;
+
+    // MUDANÇA 1: Relaxamento da Confiança (Trust Update)
+    // O novo S2 é mais estável. Podemos tentar extrair detalhe mesmo em streams
+    // um pouco mais sujos (0.2), pois o S2 já removeu os blocos grandes.
+    if (stream_confidence < 0.2) {
+        return vec4(0.0, 0.0, 0.0, 1.0);
+    }
+
+    // 2. LÊ AS IMAGENS
+    vec3 original_linear = GRX_COLOR_LINEAR_tex(uv).rgb;
+    vec3 clean_srgb = STAGE2_OUTPUT_tex(uv).rgb;
+    vec3 clean_linear = sRGB_to_linear(clean_srgb);
+
+    // 3. CALCULA O DELTA (A Matéria Bruta)
+    vec3 detail_delta = original_linear - clean_linear;
+
+    // Trava de sanidade
+    if (any(isnan(detail_delta))) detail_delta = vec3(0.0);
+    // Clamp mais solto para permitir texturas de alto contraste
+    detail_delta = clamp(detail_delta, -0.6, 0.6);
+
+    // 4. ANÁLISE DE SALIÊNCIA (O S1)
+    vec4 golden = GRX_GOLDEN_tex(uv);
+    vec4 luma = GRX_LUMA_tex(uv);
+
+    float aesthetic_score = golden.a;  // Beleza
+    float pattern_entropy = golden.g;  // Complexidade
+    float brightness = luma.r;         // Brilho
+
+    // 5. PURIFICAÇÃO CROMÁTICA (NOVO)
+    // Ruído costuma ser colorido. Textura costuma ser luz e sombra.
+    // Extraímos a luminância do delta.
+    float delta_luma = dot(detail_delta, vec3(0.2126, 0.7152, 0.0722));
+
+    // Se a área for MUITO bonita (rosto), permitimos cor (sardas, maquiagem).
+    // Se não, forçamos o detalhe a ser monocromático (evita ruído RGB).
+    float chroma_allowance = smoothstep(0.6, 0.9, aesthetic_score);
+    vec3 purified_detail = mix(vec3(delta_luma), detail_delta, chroma_allowance);
+
+    // 6. O "SELO DA SOMBRA" (Sincronia com S2 Nuclear)
+    // O S2 limpou agressivamente sombras < 0.12. O S3 deve respeitar isso.
+    // Criamos uma curva que mata a reinjeção nas sombras profundas.
+    float shadow_seal = smoothstep(0.05, 0.25, brightness);
+
+    // 7. MÁSCARA DE CURADORIA (A Peneira Refinada)
+    // Aceitamos detalhe se:
+    // (É complexo E bonito) OU (É uma borda fina que o S2 suavizou demais)
+    float edge_restore = maps.r * 0.3; // Recupera levemente bordas perdidas
+    float texture_score = pattern_entropy * aesthetic_score;
+
+    float acceptance_mask = texture_score + edge_restore;
+
+    // Modulações Finais
+    acceptance_mask *= shadow_seal;              // Respeita o preto
+    acceptance_mask *= smoothstep(0.15, 0.5, stream_confidence); // Escala com a confiança
+
+    // Aplica a máscara
+    vec3 final_detail = purified_detail * acceptance_mask;
+
+    // Boost Sutil para Texturas Finas ("Pop")
+    // Se for textura de alta qualidade, damos um leve ganho para compensar a perda no Delta
+    if (aesthetic_score > 0.7) {
+        final_detail *= 1.2;
+    }
+
+    return vec4(final_detail, 1.0);
 }
