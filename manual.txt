@@ -1,0 +1,108 @@
+Este é o **Manual de Operações da Pipeline GRX **.
+
+Este documento foi desenhado para você, o operador da pipeline. Ele separa o que é **Gosto Pessoal** (pode mexer à vontade), o que é **Ajuste Fino** (mexa com cuidado) e o que é **Estrutural** (proibido mexer).
+
+-----
+
+# 📘 Legenda de Risco
+
+  * 🟢 **LIVRE:** Parâmetros de gosto pessoal. Ajuste conforme sua tela ou preferência.
+  * 🟡 **CUIDADO:** Afeta a estabilidade. Valores extremos causam artefatos.
+  * 🔴 **SISTEMA:** Não altere a menos que saiba *exatamente* como a matemática interna funciona.
+
+-----
+
+# 🧠 Estágio 1 (S1): O Juiz (Análise)
+
+*Arquivo: `Quantumanalisev46.glsl`*
+
+> **Objetivo:** Este estágio não muda a imagem, ele *olha* para ela. Alterar valores aqui muda a "opinião" da pipeline sobre o que é borda, o que é ruído e o que é movimento.
+
+| Parâmetro | Valor Padrão | Risco | O que faz? / Por que ajustar? |
+| :--- | :---: | :---: | :--- |
+| `MOTION_SENSITIVITY` | `1.2` | 🟡 | **Sensibilidade ao Movimento.**<br>**Aumentar:** Detecta movimentos menores, desliga o TAA mais cedo (menos ghosting, mais serrilhado).<br>**Diminuir:** Mantém TAA em movimentos rápidos (mais fluido, risco de rastro). |
+| `EDGE_STRENGTH_FACTOR` | `1.5` | 🟡 | **Detecção de Bordas.**<br>Afeta onde o S2/S4 aplicam Sharpening. Se sua imagem parecer "mole", aumente levemente para `1.6`. Se tiver halos, baixe para `1.3`. |
+| `LOW_LIGHT_THRESHOLD` | `0.15` | 🔴 | **Ponto de Corte de Sombra.**<br>Define o que é "Zona Abissal". Mexer aqui descalibra a proteção de ruído colorido nas sombras do S2. |
+| `ENABLE_SAFETY_CHECKS` | `1` | 🔴 | **Trava de Segurança (NaN/Inf).**<br>**NUNCA DESLIGUE.** É o que impede a tela de piscar branco se o vídeo vier corrompido. |
+
+-----
+
+# 🛡️ Estágio 2 (S2): O Cirurgião (Limpeza)
+
+*Arquivo: `Quantumprocessev46.glsl`*
+
+> **Objetivo:** Limpar o "lixo" (compressão, blocos) antes que ele seja ampliado.
+
+| Parâmetro | Valor Padrão | Risco | O que faz? / Por que ajustar? |
+| :--- | :---: | :---: | :--- |
+| `ENABLE_ANIME_CHAOS_SOLVER` | `1` | 🟢 | **Modo Dragon Ball Z.**<br>**1 (ON):** Ativa a correção agressiva de traços quando detecta Anime. Vital para desenhos antigos.<br>**0 (OFF):** Desligue se estiver assistindo *Live Action* muito ruim e o detector estiver confundindo atores com desenhos. |
+| `DENOISE_STRENGTH` | `0.85` | 🟢 | **Força da Limpeza.**<br>**Baixar (0.5):** Se você gosta de ver o grão original do filme.<br>**Aumentar (0.95):** Se você quer imagem "limpa" estilo TV moderna (efeito plástico). |
+| `DEBLOCK_STRENGTH` | `0.90` | 🟡 | **Quebra de Blocos.**<br>Combate o quadriculado de vídeos de baixa qualidade. Não aumente para `1.0` ou perderá detalhes de texturas finas (roupas, asfalto). |
+| `SHADOW_NUKE_LEVEL` | `0.12` | 🔴 | **Extermínio de Sombra.**<br>Abaixo deste nível de luz, o S2 "mata" detalhes para esconder ruído. Alterar isso pode fazer sombras ficarem roxas ou cinzas lavadas. |
+
+-----
+
+# 🎨 Estágio 3 (S3): O Restaurador
+
+*Arquivo: `Quantumprocessev45.glsl` (Integrado na lógica)*
+
+> **Nota:** O S3 geralmente opera com constantes internas baseadas na análise do S1, mas seus efeitos são visíveis na *textura*.
+
+  * **Não há `#define` críticos para o usuário aqui**, pois ele obedece aos mapas do S1. A "mágica" do S3 (Vibrance, Pele) é automática. Se a cor da pele estiver estranha, o ajuste deve ser feito no **Tone Mapping do S4**, não aqui.
+
+-----
+
+# 🌟 Estágio 4 (S4): O Maestro (Upscale & Saída)
+
+*Arquivo: `Quantumupscalev46.glsl`*
+
+> **Objetivo:** Dar o polimento final, aumentar a resolução e controlar as cores. **Aqui é onde você fará 90% dos seus ajustes.**
+
+### 🎛️ Controles de Imagem (Gosto Pessoal)
+
+| Parâmetro | Valor Padrão | Risco | O que faz? / Por que ajustar? |
+| :--- | :---: | :---: | :--- |
+| `UPSCALE_STRENGTH` | `0.65` | 🟢 | **Nitidez do Upscale.**<br>`0.0` = Bilinear (suave). `1.0` = Lanczos/Jinc afiado. Use `0.65` para equilíbrio. |
+| `SHARPNESS_LEVEL` | `0.60` | 🟢 | **Nitidez Final.**<br>Aumente para animes modernos. Diminua para filmes antigos com muito grão. Acima de `0.8` cria halos brancos feios. |
+| `FILM_LOOK_STRENGTH` | `0.35` | 🟢 | **Efeito Cinema.**<br>Adiciona grão sintético e imperfeição orgânica. Se você odeia grão e quer imagem "de vidro", coloque `0.0`. |
+| `BRIGHTNESS_ADJUSTMENT` | `1.00` | 🟢 | **O "Yang" (Luz).**<br>Controla a expansão de luz. Se a imagem parecer escura, aumente. Não afeta o preto (shadows), apenas os brilhos. |
+| `CONTRAST_ENHANCEMENT` | `0.65` | 🟢 | **O "Yin" (Profundidade).**<br>Aumenta a diferença entre claro e escuro. Valores altos dão "pop" na imagem, mas podem esmagar detalhes na sombra. |
+
+### ⚙️ Controles Técnicos (Cuidado\!)
+
+| Parâmetro | Valor Padrão | Risco | O que faz? / Por que ajustar? |
+| :--- | :---: | :---: | :--- |
+| `UPSCALE_FACTOR` | `2.0` | 🟡 | **Multiplicador de Tamanho.**<br>Geralmente `2.0` (1080p -\> 4K). Se você tem um monitor 1440p e vídeo 720p, mude conforme a matemática da tela. **Impacto massivo na performance da GPU.** |
+| `TAA_STRENGTH` | `0.95` | 🟡 | **Estabilidade Temporal.**<br>Reduz o serrilhado em movimento. Se notar "fantasmas" (ghosting) em jogos ou esportes, reduza para `0.5` ou `0.0`. |
+| `MOTION_STABILITY` | `0.85` | 🟡 | **Tolerância do TAA.**<br>Define o quão rápido algo deve se mover para o TAA desligar. Valores altos mantêm o TAA ligado por mais tempo (mais fluido, mais risco de borrao). |
+
+### 🚫 Controles de Sistema (NÃO TOQUE)
+
+| Parâmetro | Valor | Risco | Motivo da Proibição |
+| :--- | :---: | :---: | :--- |
+| `OUTPUT_LINEAR_FOR_MPV` | `1` | 🔴 | **Formato de Cor.**<br>Se seu `mpv.conf` tem `--gamut-mapping-mode=linear`, isto **TEM** que ser `1`. Se mudar para `0`, as cores ficarão lavadas e erradas. |
+| `GOLDEN_RATIO` | `1.618...` | 🔴 | **Matemática Áurea.**<br>Todas as espirais de amostragem e dither dependem disso. Alterar quebra a distribuição de ruído. |
+| `LANCZOS_RADIUS_BASE` | `12.0` | 🔴 | **Kernel do Upscale.**<br>Mexer aqui destrói a relação de performance/qualidade do algoritmo de Lanczos. |
+
+-----
+
+# 💡 Resumo de Cenários Comuns
+
+**1. "Estou vendo Dragon Ball Z e as linhas estão fracas."**
+
+  * Vá no **S2**: Garanta que `ENABLE_ANIME_CHAOS_SOLVER` está `1`.
+  * Vá no **S4**: Aumente `SHARPNESS_LEVEL` para `0.8`.
+
+**2. "Estou vendo um filme antigo e os rostos parecem de cera."**
+
+  * Vá no **S2**: Reduza `DENOISE_STRENGTH` para `0.4`.
+  * Vá no **S4**: Aumente `FILM_LOOK_STRENGTH` para `0.5` (reinjeta grão "bom" para disfarçar a cera).
+
+**3. "A imagem está piscando/tremendo em cenas de ação."**
+
+  * Vá no **S1**: Aumente `MOTION_SENSITIVITY` (torna o juiz mais estrito, desliga o temporal antes).
+  * Vá no **S4**: Reduza `TAA_STRENGTH` para `0.0` temporariamente para testar.
+
+**4. "As sombras estão cinzas, quero preto profundo."**
+
+  * Vá no **S4**: Aumente `CONTRAST_ENHANCEMENT`. Não mexa no `SHADOW_NUKE` do S2 (isso destrói dados, o contraste do S4 apenas ajusta a curva visualmente).
