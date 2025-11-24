@@ -659,8 +659,6 @@ QUALITY_CLAMP_THRESHOLD, MAX_GAMMA_EXPANSION
 
 STRUCTURAL_PROTECTION_FACTOR (reduzir muito pode destruir bordas)
 
-9) Recomendações práticas de workflow para ajustar parâmetros
-Versão de controle: mantenha um repositório com commits antes de qualquer alteração. Use tags (vX.Y) para marcar estados testados.
 
 Teste “triple set”: para cada alteração, teste em:
 
